@@ -2,7 +2,7 @@
 
 ## 完整的安装步骤
 
-### 第1步: 验证Python版本
+### 第 1 步: 验证 Python 版本
 
 ```bash
 python --version
@@ -10,15 +10,15 @@ python --version
 
 需要 Python 3.8+
 
-### 第2步: 安装依赖包
+### 第 2 步: 安装依赖包
 
-#### 方法A: 快速安装 (推荐)
+#### 方法 A: 快速安装 (推荐)
 
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 方法B: 手动安装核心包
+#### 方法 B: 手动安装核心包
 
 ```bash
 pip install torch
@@ -30,9 +30,9 @@ pip install matplotlib
 pip install tqdm
 ```
 
-#### 方法C: GPU加速 (CUDA)
+#### 方法 C: GPU 加速 (CUDA)
 
-如果你有NVIDIA GPU，安装GPU版本的PyTorch会显著加快训练速度：
+如果你有 NVIDIA GPU，安装 GPU 版本的 PyTorch 会显著加快训练速度：
 
 ```bash
 # PyTorch CUDA 12.1 版本
@@ -42,12 +42,13 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 
-检查GPU是否可用：
+检查 GPU 是否可用：
+
 ```bash
 python -c "import torch; print(torch.cuda.is_available())"
 ```
 
-### 第3步: 验证安装
+### 第 3 步: 验证安装
 
 ```bash
 python validate_setup.py
@@ -57,7 +58,7 @@ python validate_setup.py
 
 ## 常见安装问题
 
-### 问题1: pip命令不存在
+### 问题 1: pip 命令不存在
 
 **解决方案**: 使用 `python -m pip`
 
@@ -65,21 +66,21 @@ python validate_setup.py
 python -m pip install -r requirements.txt
 ```
 
-### 问题2: PyTorch安装失败
+### 问题 2: PyTorch 安装失败
 
-**解决方案**: 根据你的操作系统和GPU情况访问 https://pytorch.org/get-started/locally/
+**解决方案**: 根据你的操作系统和 GPU 情况访问 https://pytorch.org/get-started/locally/
 
-### 问题3: 磁盘空间不足
+### 问题 3: 磁盘空间不足
 
-**解决方案**: Atari环境较大，可以先安装最小版本：
+**解决方案**: Atari 环境较大，可以先安装最小版本：
 
 ```bash
 pip install torch gymnasium numpy matplotlib
 ```
 
-先用CartPole和FrozenLake测试，后来再安装完整的Atari支持。
+先用 CartPole 和 FrozenLake 测试，后来再安装完整的 Atari 支持。
 
-### 问题4: 权限错误
+### 问题 4: 权限错误
 
 **解决方案**: 使用用户级安装
 
@@ -91,7 +92,7 @@ pip install --user -r requirements.txt
 
 ## 使用虚拟环境 (推荐)
 
-### Windows (使用venv)
+### Windows (使用 venv)
 
 ```bash
 # 创建虚拟环境
@@ -110,7 +111,7 @@ python train.py --game cartpole
 deactivate
 ```
 
-### Windows (使用Conda)
+### Windows (使用 Conda)
 
 ```bash
 # 创建Conda环境
@@ -156,7 +157,7 @@ deactivate
 pip install torch numpy matplotlib gymnasium
 ```
 
-这样可以运行 CartPole 和 FrozenLake，Pong 需要额外的Atari包。
+这样可以运行 CartPole 和 FrozenLake，Pong 需要额外的 Atari 包。
 
 ## 验证安装成功
 
@@ -189,7 +190,7 @@ pip uninstall torch gymnasium gymnasium[atari] numpy matplotlib tqdm
 
 ## 故障诊断
 
-### 测试PyTorch
+### 测试 PyTorch
 
 ```python
 import torch
@@ -199,7 +200,7 @@ print("CUDA版本:", torch.version.cuda if torch.cuda.is_available() else "N/A")
 print("GPU数量:", torch.cuda.device_count() if torch.cuda.is_available() else 0)
 ```
 
-### 测试Gymnasium
+### 测试 Gymnasium
 
 ```python
 import gymnasium as gym
@@ -209,7 +210,7 @@ print("CartPole环境:", env)
 env.close()
 ```
 
-### 测试NumPy和Matplotlib
+### 测试 NumPy 和 Matplotlib
 
 ```python
 import numpy as np
@@ -222,23 +223,24 @@ print("Matplotlib版本:", plt.matplotlib.__version__)
 
 ### 最低配置
 
-- **CPU**: 2核心 2.0 GHz+
+- **CPU**: 2 核心 2.0 GHz+
 - **RAM**: 4 GB
-- **磁盘**: 5 GB (含Atari环境)
+- **磁盘**: 5 GB (含 Atari 环境)
 - **操作系统**: Windows 10+, macOS 10.13+, Linux (Ubuntu 18.04+)
 
 ### 推荐配置
 
-- **CPU**: 4核心+ / **GPU**: NVIDIA GPU (CUDA支持)
+- **CPU**: 4 核心+ / **GPU**: NVIDIA GPU (CUDA 支持)
 - **RAM**: 8 GB+
 - **磁盘**: 10 GB+
 - **操作系统**: 同上
 
-### GPU支持
+### GPU 支持
 
-支持以下GPU：
+支持以下 GPU：
+
 - NVIDIA GPU (CUDA 11.8+)
-- AMD GPU (ROCm支持)
+- AMD GPU (ROCm 支持)
 - MacBook Pro with Apple Silicon (MPS)
 
 ## 网络要求
@@ -246,6 +248,7 @@ print("Matplotlib版本:", plt.matplotlib.__version__)
 首次安装需要下载包，需要网络连接。
 
 如果在离线环境中工作，可以：
+
 1. 在有网络的机器上下载轮文件
 2. 使用 `pip install --no-index --find-links=/path/to/wheels -r requirements.txt`
 

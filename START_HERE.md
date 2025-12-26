@@ -2,21 +2,21 @@
 
 ## 🎯 从这里开始
 
-### 第一步：阅读合适的文档（5-10分钟）
+### 第一步：阅读合适的文档（5-10 分钟）
 
 根据你的情况选择：
 
-| 你的情况 | 读这个 |
-|---------|-------|
-| 我是初学者，想快速上手 | [QUICKSTART.md](QUICKSTART.md) |
-| 我想知道如何安装 | [INSTALL.md](INSTALL.md) |
-| 我想看具体例子 | [EXAMPLES.md](EXAMPLES.md) |
-| 我想深入了解代码 | [DEVELOPMENT.md](DEVELOPMENT.md) |
-| 我说中文，想快速了解 | [README_CN.md](README_CN.md) |
-| 我想知道项目包含什么 | [项目完成总结.md](项目完成总结.md) |
-| 我想看完整说明 | [README.md](README.md) |
+| 你的情况               | 读这个                             |
+| ---------------------- | ---------------------------------- |
+| 我是初学者，想快速上手 | [QUICKSTART.md](QUICKSTART.md)     |
+| 我想知道如何安装       | [INSTALL.md](INSTALL.md)           |
+| 我想看具体例子         | [EXAMPLES.md](EXAMPLES.md)         |
+| 我想深入了解代码       | [DEVELOPMENT.md](DEVELOPMENT.md)   |
+| 我说中文，想快速了解   | [README_CN.md](README_CN.md)       |
+| 我想知道项目包含什么   | [项目完成总结.md](项目完成总结.md) |
+| 我想看完整说明         | [README.md](README.md)             |
 
-### 第二步：验证环境（2分钟）
+### 第二步：验证环境（2 分钟）
 
 ```bash
 # 进入项目目录
@@ -28,7 +28,7 @@ python validate_setup.py
 
 **预期输出**: 显示所有检查通过 ✓
 
-### 第三步：快速体验（1分钟）
+### 第三步：快速体验（1 分钟）
 
 ```bash
 # 运行演示脚本 - 会在CartPole上训练50个episode
@@ -36,11 +36,12 @@ python demo.py
 ```
 
 **你将看到**:
-- 前10个episode的进度
+
+- 前 10 个 episode 的进度
 - 训练过程中奖励的增长
 - 最终的平均奖励
 
-### 第四步：开始你的第一次训练（5-10分钟）
+### 第四步：开始你的第一次训练（5-10 分钟）
 
 ```bash
 # CartPole - 最简单的环境，推荐首先尝试
@@ -53,7 +54,7 @@ python train.py --game cartpole --episodes 500
 # - 模型保存到 models/
 ```
 
-### 第五步：查看结果（2分钟）
+### 第五步：查看结果（2 分钟）
 
 ```bash
 # 分析训练结果
@@ -82,7 +83,7 @@ python validate_setup.py
 **我遇到安装错误**
 → 查看 [INSTALL.md](INSTALL.md#常见安装问题) 的故障排除部分
 
-**我如何使用GPU加速？**
+**我如何使用 GPU 加速？**
 → [INSTALL.md](INSTALL.md#方法C-GPU加速-CUDA)
 
 ---
@@ -91,12 +92,14 @@ python validate_setup.py
 
 **我只想快速体验一下**
 → [QUICKSTART.md](QUICKSTART.md) 或者：
+
 ```bash
 python demo.py  # 1分钟快速演示
 ```
 
 **我想立即开始训练**
 → [QUICKSTART.md#2-运行第一个实验---cartpole](QUICKSTART.md)
+
 ```bash
 python train.py --game cartpole --episodes 500
 ```
@@ -108,7 +111,7 @@ python train.py --game cartpole --episodes 500
 
 ### 🔵 具体示例
 
-**我想看10个详细的使用示例**
+**我想看 10 个详细的使用示例**
 → [EXAMPLES.md](EXAMPLES.md)
 
 **我想学习如何调整超参数**
@@ -125,23 +128,26 @@ python train.py --game cartpole --episodes 500
 ### 🔵 三个游戏说明
 
 **CartPole - 倒立摆**
+
 - 文件：[experiments/cartpole/README.md](experiments/cartpole/README.md)
 - 难度：⭐ 简单
-- 训练时间：5-10分钟
+- 训练时间：5-10 分钟
 - 算法：DQN
 - 推荐：首先学习！
 
 **FrozenLake - 冰湖**
+
 - 文件：[experiments/frozenlake/README.md](experiments/frozenlake/README.md)
 - 难度：⭐⭐ 中等
-- 训练时间：1-2分钟
+- 训练时间：1-2 分钟
 - 算法：Q-Learning
 - 推荐：学习表格方法
 
 **Pong - 乒乓球**
+
 - 文件：[experiments/pong/README.md](experiments/pong/README.md)
 - 难度：⭐⭐⭐ 困难
-- 训练时间：2-4小时
+- 训练时间：2-4 小时
 - 算法：DQN
 - 推荐：有经验后尝试
 
@@ -181,7 +187,7 @@ python train.py --game cartpole --episodes 500
 
 ## 📖 标准使用流程
 
-### 流程1：学习强化学习
+### 流程 1：学习强化学习
 
 ```
 1. 阅读 QUICKSTART.md (5分钟)
@@ -199,7 +205,7 @@ python train.py --game cartpole --episodes 500
 7. 观察可视化图表在 results/plots/ 中
 ```
 
-### 流程2：进行研究实验
+### 流程 2：进行研究实验
 
 ```
 1. 理解所有游戏：阅读 experiments/ 下的README
@@ -217,7 +223,7 @@ python train.py --game cartpole --episodes 500
 7. 得出结论
 ```
 
-### 流程3：扩展功能
+### 流程 3：扩展功能
 
 ```
 1. 阅读 DEVELOPMENT.md
@@ -243,7 +249,7 @@ python train.py --game cartpole --episodes 500
 python demo.py
 ```
 
-**预期时间**：1分钟
+**预期时间**：1 分钟
 
 ### 任务：训练第一个模型
 
@@ -251,8 +257,9 @@ python demo.py
 python train.py --game cartpole --episodes 500
 ```
 
-**预期时间**：5-10分钟  
+**预期时间**：5-10 分钟  
 **最终输出**：
+
 - `models/cartpole_best.pth` - 最好的模型
 - `results/logs/cartpole_500ep.json` - 训练日志
 - `results/plots/cartpole_training.png` - 训练曲线
@@ -263,7 +270,7 @@ python train.py --game cartpole --episodes 500
 python test.py --game cartpole --model models/cartpole_best.pth --episodes 20
 ```
 
-**预期时间**：30秒
+**预期时间**：30 秒
 
 ### 任务：查看训练结果
 
@@ -271,7 +278,7 @@ python test.py --game cartpole --model models/cartpole_best.pth --episodes 20
 python evaluate.py --analyze results/logs/cartpole_500ep.json
 ```
 
-**预期时间**：1分钟
+**预期时间**：1 分钟
 
 ### 任务：对比多个实验
 
@@ -282,16 +289,16 @@ python evaluate.py --compare \
     results/logs/exp3.json
 ```
 
-**预期时间**：2分钟
+**预期时间**：2 分钟
 
-### 任务：可视化FrozenLake策略
+### 任务：可视化 FrozenLake 策略
 
 ```bash
 python train.py --game frozenlake --episodes 10000
 python visualize_frozenlake.py
 ```
 
-**预期时间**：2分钟 (训练) + 30秒 (可视化)
+**预期时间**：2 分钟 (训练) + 30 秒 (可视化)
 
 ### 任务：运行所有实验
 
@@ -299,13 +306,13 @@ python visualize_frozenlake.py
 python run_experiments.py --game all
 ```
 
-**预期时间**：几小时 (取决于GPU)
+**预期时间**：几小时 (取决于 GPU)
 
 ---
 
 ## 💡 学习路径建议
 
-### 完全初学者 (推荐 4小时)
+### 完全初学者 (推荐 4 小时)
 
 ```
 1. 阅读 QUICKSTART.md (15分钟)
@@ -318,7 +325,7 @@ python run_experiments.py --game all
 8. 观察和分析结果 (1小时)
 ```
 
-### 有编程基础的用户 (推荐 2小时)
+### 有编程基础的用户 (推荐 2 小时)
 
 ```
 1. 快速阅读 QUICKSTART.md (5分钟)
@@ -329,7 +336,7 @@ python run_experiments.py --game all
 6. 尝试修改超参数 (20分钟)
 ```
 
-### 有RL经验的用户 (推荐 30分钟)
+### 有 RL 经验的用户 (推荐 30 分钟)
 
 ```
 1. 浏览 README.md (5分钟)
@@ -365,7 +372,7 @@ python run_experiments.py --game all
 
 在开始之前，确保：
 
-- [ ] Python版本 >= 3.8
+- [ ] Python 版本 >= 3.8
 - [ ] 已安装依赖：`pip install -r requirements.txt`
 - [ ] 验证通过：`python validate_setup.py` 显示 ✓
 - [ ] 演示成功：`python demo.py` 运行完成
@@ -375,18 +382,22 @@ python run_experiments.py --game all
 ## 🎓 推荐学习资源
 
 ### 强化学习理论
+
 - 📖 Sutton & Barto 《强化学习导论》
-- 🎥 David Silver UCL强化学习课程
+- 🎥 David Silver UCL 强化学习课程
 
 ### 深度学习工具
-- 📚 PyTorch官方教程：https://pytorch.org/tutorials/
-- 📄 PyTorch文档：https://pytorch.org/docs/
 
-### RL环境
-- 🏠 Gymnasium官网：https://gymnasium.farama.org/
-- 📖 Gymnasium文档
+- 📚 PyTorch 官方教程：https://pytorch.org/tutorials/
+- 📄 PyTorch 文档：https://pytorch.org/docs/
+
+### RL 环境
+
+- 🏠 Gymnasium 官网：https://gymnasium.farama.org/
+- 📖 Gymnasium 文档
 
 ### 经典论文
+
 - DQN: "Human-level control through deep reinforcement learning"
 - A3C: "Asynchronous Methods for Deep RL"
 - PPO: "Proximal Policy Optimization"
@@ -395,21 +406,21 @@ python run_experiments.py --game all
 
 ## 🚀 下一步行动
 
-### 现在就开始（5分钟）
+### 现在就开始（5 分钟）
 
 ```bash
 python validate_setup.py  # 验证环境
 python demo.py           # 运行演示
 ```
 
-### 进行第一个实验（15分钟）
+### 进行第一个实验（15 分钟）
 
 ```bash
 python train.py --game cartpole --episodes 500
 python evaluate.py --analyze results/logs/cartpole_500ep.json
 ```
 
-### 深入学习（1小时+）
+### 深入学习（1 小时+）
 
 1. 阅读 [EXAMPLES.md](EXAMPLES.md) 的详细示例
 2. 修改超参数进行实验

@@ -35,12 +35,14 @@ demo-project-rl/
 ## 安装
 
 1. 克隆项目：
+
 ```bash
 git clone <repository-url>
 cd demo-project-rl
 ```
 
 2. 安装依赖：
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -50,16 +52,19 @@ pip install -r requirements.txt
 ### 训练模型
 
 训练 CartPole：
+
 ```bash
 python train.py --game cartpole --episodes 500
 ```
 
 训练 Pong：
+
 ```bash
 python train.py --game pong --episodes 2000
 ```
 
 训练 FrozenLake：
+
 ```bash
 python train.py --game frozenlake --episodes 10000
 ```
@@ -67,6 +72,7 @@ python train.py --game frozenlake --episodes 10000
 ### 测试模型
 
 测试训练好的模型：
+
 ```bash
 python test.py --game cartpole --model models/cartpole_best.pth --episodes 10
 ```
@@ -74,6 +80,7 @@ python test.py --game cartpole --model models/cartpole_best.pth --episodes 10
 ### 可视化结果
 
 训练过程中会自动保存：
+
 - 训练曲线图到 `results/` 目录
 - 模型检查点到 `models/` 目录
 - 日志文件到 `results/logs/` 目录
@@ -81,22 +88,24 @@ python test.py --game cartpole --model models/cartpole_best.pth --episodes 10
 ## 算法说明
 
 ### DQN (Deep Q-Network)
+
 - 用于 CartPole 和 Pong
 - 使用经验回放和目标网络
 - 适合连续观察空间
 
 ### Q-Learning
+
 - 用于 FrozenLake
 - 基于表格的方法
 - 适合离散状态空间
 
 ## 性能基准
 
-| 游戏 | 平均奖励 | 训练轮数 |
-|------|----------|----------|
-| CartPole | 195+ | 500 |
-| Pong | 18+ | 2000 |
-| FrozenLake | 0.7+ | 10000 |
+| 游戏       | 平均奖励 | 训练轮数 |
+| ---------- | -------- | -------- |
+| CartPole   | 195+     | 500      |
+| Pong       | 18+      | 2000     |
+| FrozenLake | 0.7+     | 10000    |
 
 ## 依赖项
 

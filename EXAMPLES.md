@@ -2,7 +2,7 @@
 
 本文档提供了如何使用此项目的具体示例。
 
-## 例子 1: 快速演示 (1分钟)
+## 例子 1: 快速演示 (1 分钟)
 
 最快速地体验项目功能：
 
@@ -10,11 +10,11 @@
 python demo.py
 ```
 
-这将在CartPole上训练DQN 50个episode。
+这将在 CartPole 上训练 DQN 50 个 episode。
 
-## 例子 2: 训练CartPole (5-10分钟)
+## 例子 2: 训练 CartPole (5-10 分钟)
 
-CartPole是最简单的环境，适合学习和测试：
+CartPole 是最简单的环境，适合学习和测试：
 
 ```bash
 # 训练
@@ -33,13 +33,14 @@ python test.py --game cartpole --model models/cartpole_best.pth --episodes 20
 python evaluate.py --analyze results/logs/cartpole_500ep.json
 ```
 
-**预期结果**: 
+**预期结果**:
+
 - 训练后：平均奖励 > 190
-- 成功率：50+ episodes达到195以上分数
+- 成功率：50+ episodes 达到 195 以上分数
 
-## 例子 3: 训练FrozenLake (1-2分钟)
+## 例子 3: 训练 FrozenLake (1-2 分钟)
 
-FrozenLake是一个离散环境，使用Q-Learning：
+FrozenLake 是一个离散环境，使用 Q-Learning：
 
 ```bash
 # 训练
@@ -53,12 +54,13 @@ python visualize_frozenlake.py --model models/frozenlake_best.pkl
 ```
 
 **预期结果**:
+
 - 训练后：成功率 > 70%
 - 生成的可视化显示最优策略
 
-## 例子 4: 训练Pong (需要时间)
+## 例子 4: 训练 Pong (需要时间)
 
-Pong是一个复杂的环境，需要更长的训练时间：
+Pong 是一个复杂的环境，需要更长的训练时间：
 
 ```bash
 # 完整训练 (需要1-2小时)
@@ -71,13 +73,13 @@ python train.py --game pong --episodes 100
 python test.py --game pong --model models/pong_best.pth --episodes 3
 ```
 
-**提示**: 使用GPU会显著加快训练。
+**提示**: 使用 GPU 会显著加快训练。
 
 ## 例子 5: 超参数调优
 
 ### 修改学习率
 
-编辑 `train.py` 中对应游戏的config字典：
+编辑 `train.py` 中对应游戏的 config 字典：
 
 ```python
 def train_cartpole(args):
@@ -88,13 +90,14 @@ def train_cartpole(args):
 ```
 
 然后重新训练：
+
 ```bash
 python train.py --game cartpole --episodes 500
 ```
 
 ### 调整探索策略
 
-编辑epsilon衰减参数：
+编辑 epsilon 衰减参数：
 
 ```python
 epsilon_start = 1.0
@@ -165,17 +168,17 @@ for episode in range(100):
     state, _ = env.reset()
     episode_reward = 0
     done = False
-    
+
     while not done:
         action = agent.select_action(state, epsilon=0.1)
         next_state, reward, terminated, truncated, _ = env.step(action)
         done = terminated or truncated
-        
+
         agent.train_step(state, action, reward, next_state, done)
-        
+
         episode_reward += reward
         state = next_state
-    
+
     logger.log_episode(episode, episode_reward, 0)
     print(f"Episode {episode}: {episode_reward}")
 
@@ -186,6 +189,7 @@ env.close()
 ```
 
 运行：
+
 ```bash
 python my_training.py
 ```
@@ -204,21 +208,22 @@ log_dir = Path('results/logs')
 for log_file in log_dir.glob('*.json'):
     with open(log_file) as f:
         data = json.load(f)
-    
+
     rewards = [ep['reward'] for ep in data['episodes']]
-    
+
     print(f"\n{data['experiment_name']}:")
     print(f"  Total episodes: {len(rewards)}")
     print(f"  Average reward: {np.mean(rewards):.2f}")
     print(f"  Std dev: {np.std(rewards):.2f}")
     print(f"  Min: {np.min(rewards):.2f}, Max: {np.max(rewards):.2f}")
-    
+
     if len(rewards) >= 100:
         last_100 = rewards[-100:]
         print(f"  Last 100 avg: {np.mean(last_100):.2f}")
 ```
 
 运行：
+
 ```bash
 python compute_stats.py
 ```
@@ -249,14 +254,14 @@ for run in range(10):
     state, _ = env.reset()
     reward = 0
     done = False
-    
+
     while not done:
         action = agent.select_action(state, epsilon=0.0)
         next_state, r, terminated, truncated, _ = env.step(action)
         reward += r
         done = terminated or truncated
         state = next_state
-    
+
     results.append(reward)
     print(f"Run {run+1}: {reward}")
 
@@ -281,16 +286,17 @@ cd d:/demo-project-rl
 python train.py --game cartpole
 ```
 
-### CUDA相关错误
+### CUDA 相关错误
 
 ```
 RuntimeError: CUDA out of memory
 ```
 
 解决方案：
-1. 减小batch_size
-2. 减小hidden_sizes
-3. 使用CPU：编辑dqn_agent.py，强制使用CPU
+
+1. 减小 batch_size
+2. 减小 hidden_sizes
+3. 使用 CPU：编辑 dqn_agent.py，强制使用 CPU
 
 ### 环境错误
 
@@ -299,6 +305,7 @@ ModuleNotFoundError: No module named 'gymnasium'
 ```
 
 解决方案：
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -306,8 +313,9 @@ pip install -r requirements.txt
 ## 总结
 
 这个项目提供了：
+
 - ✓ 三个不同复杂度的游戏
-- ✓ 两种主要的RL算法实现
+- ✓ 两种主要的 RL 算法实现
 - ✓ 完整的训练/测试框架
 - ✓ 结果可视化工具
 - ✓ 易于扩展的代码结构

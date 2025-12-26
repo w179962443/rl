@@ -6,11 +6,11 @@
 pip install -r requirements.txt
 ```
 
-**注意**: 安装Atari游戏环境可能需要一些时间。
+**注意**: 安装 Atari 游戏环境可能需要一些时间。
 
 ## 2. 运行第一个实验 - CartPole
 
-CartPole是最简单的环境，适合快速测试：
+CartPole 是最简单的环境，适合快速测试：
 
 ```bash
 python train.py --game cartpole --episodes 500
@@ -22,9 +22,9 @@ python train.py --game cartpole --episodes 500
 python test.py --game cartpole --model models/cartpole_best.pth --episodes 10 --render
 ```
 
-## 3. 训练FrozenLake
+## 3. 训练 FrozenLake
 
-FrozenLake是表格方法的经典例子：
+FrozenLake 是表格方法的经典例子：
 
 ```bash
 python train.py --game frozenlake --episodes 10000
@@ -36,20 +36,20 @@ python train.py --game frozenlake --episodes 10000
 python test.py --game frozenlake --model models/frozenlake_best.pkl --episodes 100 --render
 ```
 
-## 4. 训练Pong (需要较长时间)
+## 4. 训练 Pong (需要较长时间)
 
 ```bash
 python train.py --game pong --episodes 2000
 ```
 
-**提示**: Pong训练时间较长，建议在GPU上运行或减少训练轮数进行测试。
+**提示**: Pong 训练时间较长，建议在 GPU 上运行或减少训练轮数进行测试。
 
 ## 5. 查看结果
 
 训练完成后，查看生成的图表：
 
 - `results/plots/` - 训练曲线图
-- `results/logs/` - JSON格式的训练日志
+- `results/logs/` - JSON 格式的训练日志
 - `models/` - 保存的模型文件
 
 ## 6. 评估和比较
@@ -94,14 +94,15 @@ A: 编辑 [train.py](train.py) 中对应游戏的配置字典。
 
 ### Q: 训练太慢了怎么办？
 
-A: 
-1. 确保安装了PyTorch的GPU版本
+A:
+
+1. 确保安装了 PyTorch 的 GPU 版本
 2. 减少训练轮数进行测试
-3. 减小batch_size或memory_size
+3. 减小 batch_size 或 memory_size
 
 ### Q: 如何保存训练过程的视频？
 
-A: 可以使用gymnasium的`RecordVideo`包装器：
+A: 可以使用 gymnasium 的`RecordVideo`包装器：
 
 ```python
 from gymnasium.wrappers import RecordVideo
@@ -110,7 +111,8 @@ env = RecordVideo(env, video_folder='./videos/')
 
 ### Q: 模型性能不好怎么办？
 
-A: 
+A:
+
 1. 增加训练轮数
 2. 调整学习率
 3. 调整探索率衰减
@@ -141,9 +143,9 @@ demo-project-rl/
 ## 下一步
 
 1. 尝试修改超参数，观察对训练的影响
-2. 实现新的算法（如PPO、A3C）
+2. 实现新的算法（如 PPO、A3C）
 3. 添加新的游戏环境
-4. 实现更复杂的神经网络结构（如CNN for Pong）
-5. 添加TensorBoard支持进行更详细的可视化
+4. 实现更复杂的神经网络结构（如 CNN for Pong）
+5. 添加 TensorBoard 支持进行更详细的可视化
 
 祝你训练愉快！ 🚀
