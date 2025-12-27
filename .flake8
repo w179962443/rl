@@ -1,0 +1,11 @@
+[flake8]
+max-line-length = 120
+exclude = .git,__pycache__,models,venv,.venv
+ignore = 
+    E203,  # whitespace before ':'
+    E501,  # line too long (handled by black)
+    W503,  # line break before binary operator
+    W504,  # line break after binary operator
+per-file-ignores =
+    __init__.py:F401,  # imported but unused
+    test_*.py:E501,    # test files can have longer lines

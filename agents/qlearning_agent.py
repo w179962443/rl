@@ -2,8 +2,10 @@
 Q-Learning Agent implementation for discrete state spaces.
 """
 
-import numpy as np
 import pickle
+
+import numpy as np
+
 from .base_agent import BaseAgent
 
 

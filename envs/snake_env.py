@@ -2,10 +2,11 @@
 Snake Game Environment - Custom Gymnasium environment for Snake game.
 """
 
-import gymnasium as gym
-from gymnasium import spaces
-import numpy as np
 from enum import Enum
+
+import gymnasium as gym
+import numpy as np
+from gymnasium import spaces
 
 
 class Direction(Enum):

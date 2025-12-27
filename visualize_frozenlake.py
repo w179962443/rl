@@ -4,10 +4,11 @@ Script to visualize FrozenLake Q-table and policy.
 
 import argparse
 import os
+
 from agents import QLearningAgent
 from utils.visualize_qtable import (
-    visualize_q_table,
     visualize_policy,
+    visualize_q_table,
     visualize_value_function,
 )
 

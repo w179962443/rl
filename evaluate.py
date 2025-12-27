@@ -3,10 +3,12 @@ Evaluation and comparison script for trained models.
 """
 
 import argparse
-import os
 import json
-import numpy as np
+import os
+
 import matplotlib.pyplot as plt
+import numpy as np
+
 from utils import Plotter
 
 

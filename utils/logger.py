@@ -2,8 +2,8 @@
 Utility functions for logging training progress.
 """
 
-import os
 import json
+import os
 from datetime import datetime
 
 

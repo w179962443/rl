@@ -2,9 +2,10 @@
 Visualization tools for Q-learning agents.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 import os
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def visualize_q_table(agent, save_path="results/plots/q_table.png"):

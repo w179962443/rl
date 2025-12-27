@@ -2,25 +2,25 @@
 Quick start script for running experiments.
 """
 
+import argparse
 import os
 import subprocess
-import argparse
 
 
 def run_experiment(game, episodes):
     """Run a training experiment."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Starting {game.upper()} experiment")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     # Run training
     cmd = f"python train.py --game {game} --episodes {episodes}"
     print(f"Running: {cmd}\n")
     subprocess.run(cmd, shell=True)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"{game.upper()} experiment completed!")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 def main():

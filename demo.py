@@ -3,8 +3,9 @@ Demo script to show basic usage of the package.
 """
 
 import gymnasium as gym
-from agents import DQNAgent
 import numpy as np
+
+from agents import DQNAgent
 
 
 def demo_cartpole():

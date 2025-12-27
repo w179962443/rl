@@ -60,9 +60,75 @@ FROZENLAKE_CONFIG = {
     "success_threshold": 0.7,  # 70% success rate
 }
 
+# Snake configuration
+SNAKE_CONFIG = {
+    "agent": "DQN",
+    "env_name": "Snake-v0",
+    "episodes": 1000,
+    "hyperparameters": {
+        "gamma": 0.99,
+        "learning_rate": 0.001,
+        "batch_size": 64,
+        "memory_size": 10000,
+        "target_update_freq": 10,
+        "hidden_sizes": [256, 256],
+    },
+    "exploration": {
+        "epsilon_start": 1.0,
+        "epsilon_end": 0.01,
+        "epsilon_decay": 0.995,
+    },
+    "success_threshold": 50,  # Average reward > 50
+}
+
+# LunarLander configuration
+LUNARLANDER_CONFIG = {
+    "agent": "DQN",
+    "env_name": "LunarLander-v2",
+    "episodes": 1000,
+    "hyperparameters": {
+        "gamma": 0.99,
+        "learning_rate": 0.0005,
+        "batch_size": 64,
+        "memory_size": 100000,
+        "target_update_freq": 10,
+        "hidden_sizes": [256, 256],
+    },
+    "exploration": {
+        "epsilon_start": 1.0,
+        "epsilon_end": 0.01,
+        "epsilon_decay": 0.995,
+    },
+    "success_threshold": 200,  # Average reward > 200 over 100 episodes
+}
+
+# Breakout configuration
+BREAKOUT_CONFIG = {
+    "agent": "DQN",
+    "env_name": "ALE/Breakout-v5",
+    "episodes": 5000,
+    "hyperparameters": {
+        "gamma": 0.99,
+        "learning_rate": 0.00025,
+        "batch_size": 32,
+        "memory_size": 100000,
+        "target_update_freq": 1000,
+        "hidden_sizes": [512, 256],
+    },
+    "exploration": {
+        "epsilon_start": 1.0,
+        "epsilon_end": 0.1,
+        "epsilon_decay": 0.9999,
+    },
+    "success_threshold": 50,  # Average score > 50
+}
+
 # All configurations
 CONFIGS = {
     "cartpole": CARTPOLE_CONFIG,
     "pong": PONG_CONFIG,
     "frozenlake": FROZENLAKE_CONFIG,
+    "snake": SNAKE_CONFIG,
+    "lunarlander": LUNARLANDER_CONFIG,
+    "breakout": BREAKOUT_CONFIG,
 }

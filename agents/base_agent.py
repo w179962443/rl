@@ -3,6 +3,7 @@ Base Agent class for all reinforcement learning agents.
 """
 
 from abc import ABC, abstractmethod
+
 import numpy as np
 
 

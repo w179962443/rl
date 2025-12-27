@@ -2,9 +2,10 @@
 Plotting utilities for visualizing training results.
 """
 
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 
 
 class Plotter:
