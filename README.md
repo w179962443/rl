@@ -16,20 +16,23 @@
 ## ✨ 新功能
 
 ### 游戏环境
-- **Flappy Bird** - 完整的 Pygame 实现，7维状态空间
-- **🆕 Super Mario Bros** - NES 经典游戏，CNN处理图像输入
+
+- **Flappy Bird** - 完整的 Pygame 实现，7 维状态空间
+- **🆕 Super Mario Bros** - NES 经典游戏，CNN 处理图像输入
 
 ### CNN-DQN 支持
+
 - 🆕 专门的卷积神经网络 DQN Agent
 - 支持图像状态输入（帧堆叠）
 - 适用于 Atari、Mario 等视觉游戏
 
 ### 训练系统增强
-- ✅ **自动保存训练图表** - 每N轮自动生成训练曲线
+
+- ✅ **自动保存训练图表** - 每 N 轮自动生成训练曲线
 - ✅ **训练历史持久化** - 完整保存训练数据，支持断点续训
 - ✅ **智能模型管理** - 自动保存最佳模型和定期检查点
 - ✅ **定期渲染** - 可配置的游戏画面渲染频率
-- ✅ **详细日志记录** - JSON和Pickle格式的训练日志
+- ✅ **详细日志记录** - JSON 和 Pickle 格式的训练日志
 
 ## 📁 项目结构
 
@@ -43,9 +46,9 @@ rl/
 │   ├── snake_env.py    # 贪吃蛇环境
 │   └── flappybird_env.py  # 🆕 Flappy Bird环境
 ├── experiments/         # 实验配置和脚本
-│   ├── cartpole/       
-│   ├── pong/           
-│   ├── frozenlake/     
+│   ├── cartpole/
+│   ├── pong/
+│   ├── frozenlake/
 │   ├── snake/
 │   ├── lunarlander/
 │   ├── breakout/
@@ -82,6 +85,7 @@ python train.py --game cartpole --episodes 500
 ```bash
 python train.py --game pong --episodes 2000
 ```
+
 其他游戏
 
 训练 CartPole：
@@ -126,36 +130,40 @@ python train.py --game lunarlander --episodes 2000 --render-every 100
 
 ## 📊 性能基准
 
-| 游戏         | 目标平均奖励 | 建议训练轮数 | 状态空间   | 算法 |
-| ------------ | ------------ | ------------ | ---------- | ---- |
-| CartPole     | 195+         | 500          | 连续 (4)   | DQN |
-| Pong         | 18+          | 2000         | 图像       | DQN |
-| FrozenLake   | 0.7+         | 10000        | 离散 (16)  | Q-Learning |
-| Snake        | 10+          | 1000         | 离散       | DQN |
-| LunarLander  | 200+         | 2000         | 连续 (8)   | DQN |
-| Breakout     | 30+          | 5000         | 图像       | DQN |
-| Flappy Bird  | 50+          | 10000        | 连续 (7)   | DQN |
-| **Super Mario** | **通关**  | **10000+**   | **图像 (4x84x84)** | **CNN-DQN** |
+| 游戏            | 目标平均奖励 | 建议训练轮数 | 状态空间           | 算法        |
+| --------------- | ------------ | ------------ | ------------------ | ----------- |
+| CartPole        | 195+         | 500          | 连续 (4)           | DQN         |
+| Pong            | 18+          | 2000         | 图像               | DQN         |
+| FrozenLake      | 0.7+         | 10000        | 离散 (16)          | Q-Learning  |
+| Snake           | 10+          | 1000         | 离散               | DQN         |
+| LunarLander     | 200+         | 2000         | 连续 (8)           | DQN         |
+| Breakout        | 30+          | 5000         | 图像               | DQN         |
+| Flappy Bird     | 50+          | 10000        | 连续 (7)           | DQN         |
+| **Super Mario** | **通关**     | **10000+**   | **图像 (4x84x84)** | **CNN-DQN** |
 
 ## 🔥 主要特性
 
 ### 1. 完善的训练系统
+
 - 自动保存最佳模型
 - 定期检查点保存
 - 训练历史持久化
 - 支持断点续训
 
 ### 2. 可视化工具
+
 - 实时训练图表生成
 - 多维度性能指标
 - 训练过程录制（Flappy Bird）
 
 ### 3. 灵活的配置
+
 - 可调的渲染频率
 - 自定义训练参数
 - 模块化的实验设计
 
 ### 4. 代码质量
+
 - 清晰的项目结构
 - 详细的文档说明
 - 易于扩展的架构
@@ -183,9 +191,10 @@ python train.py --game lunarlander --episodes 2000 --render-every 100
 ## 📄`
 
 **训练图表包含：**
+
 - 分数曲线和移动平均
 - 训练损失曲线
-- Epsilon探索率曲线
+- Epsilon 探索率曲线
 - 训练统计信息
 - 适合离散状态空间
 

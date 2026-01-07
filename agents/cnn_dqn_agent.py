@@ -95,7 +95,7 @@ class CNNDQNAgent(BaseAgent):
         self.batch_size = config.get("batch_size", 32)
         self.memory_size = config.get("memory_size", 100000)
         self.target_update_freq = config.get("target_update_freq", 10000)
-        
+
         # Epsilon 参数
         self.epsilon = config.get("epsilon_start", 1.0)
         self.epsilon_min = config.get("epsilon_end", 0.1)
@@ -143,13 +143,19 @@ class CNNDQNAgent(BaseAgent):
             # 确保状态形状正确
             if len(state.shape) == 3:
                 state = np.expand_dims(state, 0)
-            
+
             state_tensor = torch.FloatTensor(state).to(self.device)
             q_values = self.policy_net(state_tensor)
             return q_values.argmax().item()
 
-    def remember(self, state: np.ndarray, action: int, reward: float, 
-                 next_state: np.ndarray, done: bool):
+    def remember(
+        self,
+        state: np.ndarray,
+        action: int,
+        reward: float,
+        next_state: np.ndarray,
+        done: bool,
+    ):
         """存储经验到回放缓冲区"""
         self.memory.append((state, action, reward, next_state, done))
 
@@ -234,10 +240,10 @@ class CNNDQNAgent(BaseAgent):
 if __name__ == "__main__":
     # 测试 CNN-DQN
     print("Testing CNN-DQN Agent...")
-    
+
     state_shape = (4, 84, 84)  # 4 stacked frames
     action_size = 7  # Mario SIMPLE actions
-    
+
     config = {
         "gamma": 0.99,
         "learning_rate": 0.00025,
@@ -248,14 +254,14 @@ if __name__ == "__main__":
         "epsilon_end": 0.1,
         "epsilon_decay": 0.9999,
     }
-    
+
     agent = CNNDQNAgent(state_shape, action_size, config)
-    
+
     # 测试选择动作
     test_state = np.random.randn(*state_shape).astype(np.float32)
     action = agent.select_action(test_state)
     print(f"Selected action: {action}")
-    
+
     # 测试记忆和训练
     for i in range(100):
         state = np.random.randn(*state_shape).astype(np.float32)
@@ -263,9 +269,9 @@ if __name__ == "__main__":
         reward = random.random()
         next_state = np.random.randn(*state_shape).astype(np.float32)
         done = random.random() > 0.9
-        
+
         agent.remember(state, action, reward, next_state, done)
-    
+
     # 训练
     loss = agent.train()
     print(f"Training loss: {loss:.4f}")

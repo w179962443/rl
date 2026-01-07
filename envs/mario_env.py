@@ -47,7 +47,7 @@ class MarioEnv:
 
         # 创建环境
         env_name = f"SuperMarioBros-{world}-{stage}-v{version}"
-        
+
         if render:
             self.env = gym_super_mario_bros.make(env_name, render_mode="human")
         else:
@@ -77,10 +77,10 @@ class MarioEnv:
     def reset(self) -> np.ndarray:
         """重置环境"""
         state = self.env.reset()
-        
+
         if isinstance(state, tuple):
             state = state[0]
-        
+
         # 初始化帧堆叠
         processed_frame = self._preprocess_frame(state)
         self.frames = [processed_frame] * self.frame_stack
@@ -101,14 +101,15 @@ class MarioEnv:
         """
         # 转换为灰度
         gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        
+
         # 调整大小
-        resized = cv2.resize(gray, (self.image_size, self.image_size), 
-                            interpolation=cv2.INTER_AREA)
-        
+        resized = cv2.resize(
+            gray, (self.image_size, self.image_size), interpolation=cv2.INTER_AREA
+        )
+
         # 归一化
         normalized = resized / 255.0
-        
+
         return normalized
 
     def _get_stacked_frames(self) -> np.ndarray:
@@ -154,15 +155,15 @@ class MarioEnv:
         custom_reward = self._shape_reward(reward, info, done)
 
         # 更新统计
-        self.current_score = info.get('score', 0)
-        current_x = info.get('x_pos', 0)
+        self.current_score = info.get("score", 0)
+        current_x = info.get("x_pos", 0)
         if current_x > self.max_x_position:
             self.max_x_position = current_x
 
         # 添加额外信息
-        info['episode_score'] = self.current_score
-        info['max_x_position'] = self.max_x_position
-        info['steps'] = self.steps
+        info["episode_score"] = self.current_score
+        info["max_x_position"] = self.max_x_position
+        info["steps"] = self.steps
 
         return state, custom_reward, done, info
 
@@ -182,17 +183,17 @@ class MarioEnv:
         shaped_reward = reward
 
         # 鼓励向右移动（探索）
-        current_x = info.get('x_pos', 0)
+        current_x = info.get("x_pos", 0)
         if current_x > self.max_x_position:
             shaped_reward += (current_x - self.max_x_position) * 0.1
             self.max_x_position = current_x
 
         # 死亡惩罚
-        if done and info.get('flag_get', False) is False:
+        if done and info.get("flag_get", False) is False:
             shaped_reward -= 50
 
         # 成功通关奖励
-        if info.get('flag_get', False):
+        if info.get("flag_get", False):
             shaped_reward += 500
 
         return shaped_reward
@@ -218,28 +219,30 @@ class MarioEnv:
 if __name__ == "__main__":
     # 测试环境
     print("Testing Mario Environment...")
-    
+
     env = MarioEnv(world=1, stage=1, render=True, movement="SIMPLE")
-    
+
     print(f"State size: {env.get_state_size()}")
     print(f"Action size: {env.get_action_size()}")
-    
+
     state = env.reset()
     print(f"Initial state shape: {state.shape}")
-    
+
     # 运行几步
     for step in range(100):
         action = np.random.randint(0, env.get_action_size())
         next_state, reward, done, info = env.step(action)
-        
+
         if step % 10 == 0:
-            print(f"Step {step}: Reward={reward:.2f}, Score={info.get('score', 0)}, X={info.get('x_pos', 0)}")
-        
+            print(
+                f"Step {step}: Reward={reward:.2f}, Score={info.get('score', 0)}, X={info.get('x_pos', 0)}"
+            )
+
         if done:
             print(f"Episode finished at step {step}")
             print(f"Final score: {info.get('episode_score', 0)}")
             print(f"Max X position: {info.get('max_x_position', 0)}")
             break
-    
+
     env.close()
     print("Test complete!")

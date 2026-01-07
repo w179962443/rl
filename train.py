@@ -18,7 +18,7 @@ from utils import Logger, Plotter
 def save_training_plots(experiment_dir, rewards, losses, epsilons, episode):
     """
     Save training progress plots.
-    
+
     Args:
         experiment_dir: Directory to save plots
         rewards: List of episode rewards
@@ -27,18 +27,20 @@ def save_training_plots(experiment_dir, rewards, losses, epsilons, episode):
         episode: Current episode number
     """
     fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-    
+
     # Plot rewards
     axes[0, 0].plot(rewards, alpha=0.3, label="Episode Reward")
     if len(rewards) >= 100:
-        avg_rewards = [np.mean(rewards[max(0, i-99):i+1]) for i in range(len(rewards))]
+        avg_rewards = [
+            np.mean(rewards[max(0, i - 99) : i + 1]) for i in range(len(rewards))
+        ]
         axes[0, 0].plot(avg_rewards, label="Avg (100 ep)", linewidth=2)
     axes[0, 0].set_xlabel("Episode")
     axes[0, 0].set_ylabel("Reward")
     axes[0, 0].set_title("Training Rewards")
     axes[0, 0].legend()
     axes[0, 0].grid(True)
-    
+
     # Plot losses
     if len(losses) > 0:
         axes[0, 1].plot(losses, alpha=0.6, label="Loss")
@@ -47,7 +49,7 @@ def save_training_plots(experiment_dir, rewards, losses, epsilons, episode):
         axes[0, 1].set_title("Training Loss")
         axes[0, 1].legend()
         axes[0, 1].grid(True)
-    
+
     # Plot epsilon
     if len(epsilons) > 0:
         axes[1, 0].plot(epsilons, label="Epsilon")
@@ -56,23 +58,33 @@ def save_training_plots(experiment_dir, rewards, losses, epsilons, episode):
         axes[1, 0].set_title("Exploration Rate")
         axes[1, 0].legend()
         axes[1, 0].grid(True)
-    
+
     # Stats
     stats_text = f"Episode: {episode}\n"
-    stats_text += f"Avg Reward (last 100): {np.mean(rewards[-100:]):.2f}\n" if len(rewards) >= 100 else f"Avg Reward: {np.mean(rewards):.2f}\n"
+    stats_text += (
+        f"Avg Reward (last 100): {np.mean(rewards[-100:]):.2f}\n"
+        if len(rewards) >= 100
+        else f"Avg Reward: {np.mean(rewards):.2f}\n"
+    )
     stats_text += f"Max Reward: {np.max(rewards):.2f}\n"
-    
-    axes[1, 1].text(0.1, 0.5, stats_text, fontsize=14, 
-                   verticalalignment="center", family="monospace")
+
+    axes[1, 1].text(
+        0.1,
+        0.5,
+        stats_text,
+        fontsize=14,
+        verticalalignment="center",
+        family="monospace",
+    )
     axes[1, 1].axis("off")
-    
+
     plt.tight_layout()
-    
+
     # Save plot
     plot_path = os.path.join(experiment_dir, "logs", f"training_episode_{episode}.png")
     plt.savefig(plot_path, dpi=100, bbox_inches="tight")
     plt.close()
-    
+
     print(f"Training plot saved to {plot_path}")
 
 
@@ -108,11 +120,13 @@ def train_cartpole(args):
 
     # Training parameters
     epsilon = agent.epsilon
-    render_every = getattr(args, 'render_every', 100)
+    render_every = getattr(args, "render_every", 100)
 
     # Logger and plotter
-    logger = Logger(log_dir=os.path.join(experiment_dir, "logs"), 
-                   experiment_name=f"cartpole_{args.episodes}ep")
+    logger = Logger(
+        log_dir=os.path.join(experiment_dir, "logs"),
+        experiment_name=f"cartpole_{args.episodes}ep",
+    )
     plotter = Plotter(save_dir=os.path.join(experiment_dir, "logs"))
 
     # Training
@@ -123,9 +137,9 @@ def train_cartpole(args):
 
     for episode in range(args.episodes):
         # Decide if we should render this episode
-        should_render = (episode % render_every == 0)
+        should_render = episode % render_every == 0
         if should_render:
-            if hasattr(env, 'render_mode'):
+            if hasattr(env, "render_mode"):
                 env.close()
                 env = gym.make("CartPole-v1", render_mode="human")
             else:
@@ -134,7 +148,7 @@ def train_cartpole(args):
             # Close render mode after rendering episode
             env.close()
             env = gym.make("CartPole-v1")
-        
+
         state, _ = env.reset()
         episode_reward = 0
         episode_loss = 0
@@ -183,9 +197,18 @@ def train_cartpole(args):
 
         # Save checkpoint and plots
         if (episode + 1) % 100 == 0:
-            agent.save(os.path.join(experiment_dir, "models", f"checkpoint_ep{episode + 1}.pth"))
-            save_training_plots(experiment_dir, rewards_history, losses_history, 
-                              epsilons_history, episode + 1)
+            agent.save(
+                os.path.join(
+                    experiment_dir, "models", f"checkpoint_ep{episode + 1}.pth"
+                )
+            )
+            save_training_plots(
+                experiment_dir,
+                rewards_history,
+                losses_history,
+                epsilons_history,
+                episode + 1,
+            )
 
     # Save final model and results
     agent.save(os.path.join(experiment_dir, "models", "final_model.pth"))
@@ -193,8 +216,9 @@ def train_cartpole(args):
     plotter.plot_training_progress(
         rewards_history, losses_history, filename="cartpole_training.png"
     )
-    save_training_plots(experiment_dir, rewards_history, losses_history, 
-                       epsilons_history, args.episodes)
+    save_training_plots(
+        experiment_dir, rewards_history, losses_history, epsilons_history, args.episodes
+    )
 
     env.close()
     print(f"\nTraining completed! Best reward: {best_reward:.2f}")
@@ -713,7 +737,16 @@ def main():
         "--game",
         type=str,
         required=True,
-        choices=["cartpole", "pong", "frozenlake", "snake", "lunarlander", "breakout", "flappybird", "mario"],
+        choices=[
+            "cartpole",
+            "pong",
+            "frozenlake",
+            "snake",
+            "lunarlander",
+            "breakout",
+            "flappybird",
+            "mario",
+        ],
         help="Game to train on",
     )
     parser.add_argument(
@@ -722,12 +755,8 @@ def main():
     parser.add_argument(
         "--render-every", type=int, default=100, help="Render every N episodes"
     )
-    parser.add_argument(
-        "--world", type=int, default=1, help="Mario world number (1-8)"
-    )
-    parser.add_argument(
-        "--stage", type=int, default=1, help="Mario stage number (1-4)"
-    )
+    parser.add_argument("--world", type=int, default=1, help="Mario world number (1-8)")
+    parser.add_argument("--stage", type=int, default=1, help="Mario stage number (1-4)")
 
     args = parser.parse_args()
 
@@ -751,9 +780,11 @@ def main():
         train_breakout(args)
     elif args.game == "flappybird":
         from experiments.flappybird.train import train_flappybird
+
         train_flappybird(args)
     elif args.game == "mario":
         from experiments.mario.train import train_mario
+
         train_mario(args)
 
 

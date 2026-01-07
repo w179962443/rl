@@ -177,7 +177,7 @@ class MarioTrainer:
             # 记录统计信息
             score = info.get("episode_score", 0)
             max_x = info.get("max_x_position", 0)
-            
+
             self.scores.append(score)
             self.epsilons.append(self.agent.epsilon)
             self.max_x_positions.append(max_x)
@@ -203,7 +203,9 @@ class MarioTrainer:
 
             if max_x > self.max_x_pos:
                 self.max_x_pos = max_x
-                best_x_model_path = os.path.join(self.model_dir, "best_distance_model.pth")
+                best_x_model_path = os.path.join(
+                    self.model_dir, "best_distance_model.pth"
+                )
                 self.agent.save(best_x_model_path)
 
             # 打印日志

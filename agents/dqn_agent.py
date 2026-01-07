@@ -87,10 +87,10 @@ class DQNAgent(BaseAgent):
 
         # Training counter
         self.train_step_counter = 0
-        
+
         # Store config for later access
         self.config = config if config else {}
-        
+
         # Epsilon parameters for compatibility with flappybird code
         self.epsilon = config.get("epsilon_start", 1.0)
         self.epsilon_min = config.get("epsilon_end", 0.01)
@@ -174,12 +174,12 @@ class DQNAgent(BaseAgent):
             self.target_net.load_state_dict(self.policy_net.state_dict())
 
         return loss.item()
-    
+
     def train(self):
         """
         Train using experience replay (no parameters needed).
         This method is for compatibility with flappybird trainer.
-        
+
         Returns:
             Loss value
         """
@@ -219,7 +219,7 @@ class DQNAgent(BaseAgent):
         self.train_step_counter += 1
 
         return loss.item()
-    
+
     def update_target_network(self):
         """Update target network with policy network weights."""
         self.target_net.load_state_dict(self.policy_net.state_dict())

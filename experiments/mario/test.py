@@ -87,7 +87,7 @@ def test_mario(args):
                 score = info.get("episode_score", 0)
                 max_x = info.get("max_x_position", 0)
                 flag_get = info.get("flag_get", False)
-                
+
                 scores.append(score)
                 max_x_positions.append(max_x)
 

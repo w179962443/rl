@@ -55,7 +55,7 @@ class FlappyBirdTrainer:
 
         # 初始化游戏和智能体
         self.env = FlappyBirdEnv(render=False)
-        
+
         # 创建DQN agent配置
         config = {
             "gamma": 0.99,
@@ -68,11 +68,11 @@ class FlappyBirdTrainer:
             "epsilon_end": 0.01,
             "epsilon_decay": 0.9992,
         }
-        
+
         self.agent = DQNAgent(
             state_size=self.env.get_state_size(),
             action_size=self.env.get_action_size(),
-            config=config
+            config=config,
         )
 
         # 训练统计
@@ -102,7 +102,7 @@ class FlappyBirdTrainer:
             print(f"Resuming from {resume_from}")
             self.agent.load(resume_from)
             # 从检查点获取已训练的轮数
-            start_episode = getattr(self.agent, 'episodes_done', 0) + 1
+            start_episode = getattr(self.agent, "episodes_done", 0) + 1
             print(f"Continuing from episode {start_episode}")
 
             # 加载训练历史
@@ -138,6 +138,7 @@ class FlappyBirdTrainer:
                 # 处理pygame事件，避免窗口无响应
                 if render:
                     import pygame
+
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
                             # 用户关闭窗口，停止渲染但继续训练
@@ -155,7 +156,7 @@ class FlappyBirdTrainer:
                 # 存储经验并训练
                 self.agent.remember(state, action, reward, next_state, done)
                 loss = self.agent.train()
-                
+
                 if loss is not None and loss > 0:
                     episode_loss += loss
                     loss_count += 1
@@ -176,8 +177,7 @@ class FlappyBirdTrainer:
 
             # 衰减探索率
             self.agent.epsilon = max(
-                self.agent.epsilon_min,
-                self.agent.epsilon * self.agent.epsilon_decay
+                self.agent.epsilon_min, self.agent.epsilon * self.agent.epsilon_decay
             )
 
             # 记录统计信息
@@ -364,7 +364,7 @@ def train_flappybird(args):
         experiment_dir="experiments/flappybird",
         num_episodes=args.episodes,
         max_steps=10000,
-        render_every=getattr(args, 'render_every', 100),
+        render_every=getattr(args, "render_every", 100),
         save_every=100,
         log_every=10,
     )

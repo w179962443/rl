@@ -17,8 +17,8 @@ def test_flappybird(args):
     print("Testing DQN on Flappy Bird")
     print("=" * 50)
 
-    model_path = getattr(args, 'model', 'experiments/flappybird/models/best_model.pth')
-    
+    model_path = getattr(args, "model", "experiments/flappybird/models/best_model.pth")
+
     # 初始化游戏
     env = FlappyBirdEnv(render=True)
 
@@ -31,11 +31,11 @@ def test_flappybird(args):
         "target_update_freq": 10,
         "hidden_sizes": [256, 256, 256],
     }
-    
+
     agent = DQNAgent(
         state_size=env.get_state_size(),
         action_size=env.get_action_size(),
-        config=config
+        config=config,
     )
 
     # 加载模型
@@ -47,8 +47,8 @@ def test_flappybird(args):
         return
 
     # 测试参数
-    num_episodes = getattr(args, 'episodes', 10)
-    
+    num_episodes = getattr(args, "episodes", 10)
+
     print(f"Running {num_episodes} test episodes...")
     print("Press ESC to quit, SPACE to pause")
     print("=" * 50)
