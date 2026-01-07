@@ -6,9 +6,14 @@ gymnasium[accept-rom-license]
 numpy>=1.24.0
 matplotlib>=3.7.0
 tqdm>=4.65.0
+pygame>=2.5.0
+
+# Super Mario Bros
+gym-super-mario-bros>=7.4.0
+nes-py>=8.2.1
+opencv-python>=4.8.0
 
 # Optional dependencies
 tensorboard>=2.13.0
-opencv-python>=4.8.0
 pillow>=10.0.0
 ale-py>=0.8.1

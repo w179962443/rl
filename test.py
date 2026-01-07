@@ -493,7 +493,7 @@ def main():
         "--game",
         type=str,
         required=True,
-        choices=["cartpole", "pong", "frozenlake", "snake", "lunarlander", "breakout"],
+        choices=["cartpole", "pong", "frozenlake", "snake", "lunarlander", "breakout", "flappybird", "mario"],
         help="Game to test",
     )
     parser.add_argument("--model", type=str, required=True, help="Path to model file")
@@ -501,6 +501,12 @@ def main():
         "--episodes", type=int, default=10, help="Number of episodes to test"
     )
     parser.add_argument("--render", action="store_true", help="Render the environment")
+    parser.add_argument(
+        "--world", type=int, default=1, help="Mario world number (1-8)"
+    )
+    parser.add_argument(
+        "--stage", type=int, default=1, help="Mario stage number (1-4)"
+    )
 
     args = parser.parse_args()
 
@@ -517,6 +523,12 @@ def main():
         test_lunarlander(args)
     elif args.game == "breakout":
         test_breakout(args)
+    elif args.game == "flappybird":
+        from experiments.flappybird.test import test_flappybird
+        test_flappybird(args)
+    elif args.game == "mario":
+        from experiments.mario.test import test_mario
+        test_mario(args)
 
 
 if __name__ == "__main__":

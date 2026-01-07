@@ -87,6 +87,14 @@ class DQNAgent(BaseAgent):
 
         # Training counter
         self.train_step_counter = 0
+        
+        # Store config for later access
+        self.config = config if config else {}
+        
+        # Epsilon parameters for compatibility with flappybird code
+        self.epsilon = config.get("epsilon_start", 1.0)
+        self.epsilon_min = config.get("epsilon_end", 0.01)
+        self.epsilon_decay = config.get("epsilon_decay", 0.995)
 
     def select_action(self, state, epsilon=0.0):
         """
@@ -166,6 +174,55 @@ class DQNAgent(BaseAgent):
             self.target_net.load_state_dict(self.policy_net.state_dict())
 
         return loss.item()
+    
+    def train(self):
+        """
+        Train using experience replay (no parameters needed).
+        This method is for compatibility with flappybird trainer.
+        
+        Returns:
+            Loss value
+        """
+        # Don't train if not enough samples
+        if len(self.memory) < self.batch_size:
+            return 0.0
+
+        # Sample batch from memory
+        batch = random.sample(self.memory, self.batch_size)
+        states, actions, rewards, next_states, dones = zip(*batch)
+
+        # Convert to tensors
+        states = torch.FloatTensor(np.array(states)).to(self.device)
+        actions = torch.LongTensor(actions).to(self.device)
+        rewards = torch.FloatTensor(rewards).to(self.device)
+        next_states = torch.FloatTensor(np.array(next_states)).to(self.device)
+        dones = torch.FloatTensor(dones).to(self.device)
+
+        # Current Q values
+        current_q_values = self.policy_net(states).gather(1, actions.unsqueeze(1))
+
+        # Next Q values from target network
+        with torch.no_grad():
+            next_q_values = self.target_net(next_states).max(1)[0]
+            target_q_values = rewards + (1 - dones) * self.gamma * next_q_values
+
+        # Compute loss
+        loss = nn.MSELoss()(current_q_values.squeeze(), target_q_values)
+
+        # Optimize
+        self.optimizer.zero_grad()
+        loss.backward()
+        # Gradient clipping
+        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), 1.0)
+        self.optimizer.step()
+
+        self.train_step_counter += 1
+
+        return loss.item()
+    
+    def update_target_network(self):
+        """Update target network with policy network weights."""
+        self.target_net.load_state_dict(self.policy_net.state_dict())
 
     def save(self, filepath):
         """Save model to file."""

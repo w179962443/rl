@@ -4,13 +4,76 @@ Training script for all games.
 
 import argparse
 import os
+import pickle
 
 import gymnasium as gym
 import numpy as np
+import matplotlib.pyplot as plt
 
 from agents import DQNAgent, QLearningAgent
 from envs import SnakeEnv
 from utils import Logger, Plotter
+
+
+def save_training_plots(experiment_dir, rewards, losses, epsilons, episode):
+    """
+    Save training progress plots.
+    
+    Args:
+        experiment_dir: Directory to save plots
+        rewards: List of episode rewards
+        losses: List of losses
+        epsilons: List of epsilon values
+        episode: Current episode number
+    """
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    
+    # Plot rewards
+    axes[0, 0].plot(rewards, alpha=0.3, label="Episode Reward")
+    if len(rewards) >= 100:
+        avg_rewards = [np.mean(rewards[max(0, i-99):i+1]) for i in range(len(rewards))]
+        axes[0, 0].plot(avg_rewards, label="Avg (100 ep)", linewidth=2)
+    axes[0, 0].set_xlabel("Episode")
+    axes[0, 0].set_ylabel("Reward")
+    axes[0, 0].set_title("Training Rewards")
+    axes[0, 0].legend()
+    axes[0, 0].grid(True)
+    
+    # Plot losses
+    if len(losses) > 0:
+        axes[0, 1].plot(losses, alpha=0.6, label="Loss")
+        axes[0, 1].set_xlabel("Episode")
+        axes[0, 1].set_ylabel("Loss")
+        axes[0, 1].set_title("Training Loss")
+        axes[0, 1].legend()
+        axes[0, 1].grid(True)
+    
+    # Plot epsilon
+    if len(epsilons) > 0:
+        axes[1, 0].plot(epsilons, label="Epsilon")
+        axes[1, 0].set_xlabel("Episode")
+        axes[1, 0].set_ylabel("Epsilon")
+        axes[1, 0].set_title("Exploration Rate")
+        axes[1, 0].legend()
+        axes[1, 0].grid(True)
+    
+    # Stats
+    stats_text = f"Episode: {episode}\n"
+    stats_text += f"Avg Reward (last 100): {np.mean(rewards[-100:]):.2f}\n" if len(rewards) >= 100 else f"Avg Reward: {np.mean(rewards):.2f}\n"
+    stats_text += f"Max Reward: {np.max(rewards):.2f}\n"
+    
+    axes[1, 1].text(0.1, 0.5, stats_text, fontsize=14, 
+                   verticalalignment="center", family="monospace")
+    axes[1, 1].axis("off")
+    
+    plt.tight_layout()
+    
+    # Save plot
+    plot_path = os.path.join(experiment_dir, "logs", f"training_episode_{episode}.png")
+    plt.savefig(plot_path, dpi=100, bbox_inches="tight")
+    plt.close()
+    
+    print(f"Training plot saved to {plot_path}")
 
 
 def train_cartpole(args):
@@ -18,6 +81,11 @@ def train_cartpole(args):
     print("=" * 50)
     print("Training DQN on CartPole")
     print("=" * 50)
+
+    # Create experiment directory
+    experiment_dir = "experiments/cartpole"
+    os.makedirs(os.path.join(experiment_dir, "models"), exist_ok=True)
+    os.makedirs(os.path.join(experiment_dir, "logs"), exist_ok=True)
 
     # Create environment
     env = gym.make("CartPole-v1")
@@ -32,25 +100,41 @@ def train_cartpole(args):
         "memory_size": 10000,
         "target_update_freq": 10,
         "hidden_sizes": [128, 128],
+        "epsilon_start": 1.0,
+        "epsilon_end": 0.01,
+        "epsilon_decay": 0.995,
     }
     agent = DQNAgent(state_size, action_size, config)
 
     # Training parameters
-    epsilon_start = 1.0
-    epsilon_end = 0.01
-    epsilon_decay = 0.995
-    epsilon = epsilon_start
+    epsilon = agent.epsilon
+    render_every = getattr(args, 'render_every', 100)
 
     # Logger and plotter
-    logger = Logger(experiment_name=f"cartpole_{args.episodes}ep")
-    plotter = Plotter()
+    logger = Logger(log_dir=os.path.join(experiment_dir, "logs"), 
+                   experiment_name=f"cartpole_{args.episodes}ep")
+    plotter = Plotter(save_dir=os.path.join(experiment_dir, "logs"))
 
     # Training
     rewards_history = []
     losses_history = []
+    epsilons_history = []
     best_reward = -float("inf")
 
     for episode in range(args.episodes):
+        # Decide if we should render this episode
+        should_render = (episode % render_every == 0)
+        if should_render:
+            if hasattr(env, 'render_mode'):
+                env.close()
+                env = gym.make("CartPole-v1", render_mode="human")
+            else:
+                env = gym.make("CartPole-v1", render_mode="human")
+        elif episode > 0 and (episode - 1) % render_every == 0:
+            # Close render mode after rendering episode
+            env.close()
+            env = gym.make("CartPole-v1")
+        
         state, _ = env.reset()
         episode_reward = 0
         episode_loss = 0
@@ -74,11 +158,13 @@ def train_cartpole(args):
             state = next_state
 
         # Decay epsilon
-        epsilon = max(epsilon_end, epsilon * epsilon_decay)
+        epsilon = max(agent.epsilon_min, epsilon * agent.epsilon_decay)
+        agent.epsilon = epsilon
 
         # Log episode
         rewards_history.append(episode_reward)
         losses_history.append(episode_loss / steps if steps > 0 else 0)
+        epsilons_history.append(epsilon)
         logger.log_episode(
             episode, episode_reward, steps, epsilon, episode_loss / steps
         )
@@ -93,19 +179,22 @@ def train_cartpole(args):
         # Save best model
         if episode_reward > best_reward:
             best_reward = episode_reward
-            os.makedirs("models", exist_ok=True)
-            agent.save("models/cartpole_best.pth")
+            agent.save(os.path.join(experiment_dir, "models", "best_model.pth"))
 
-        # Save checkpoint
+        # Save checkpoint and plots
         if (episode + 1) % 100 == 0:
-            agent.save(f"models/cartpole_ep{episode + 1}.pth")
+            agent.save(os.path.join(experiment_dir, "models", f"checkpoint_ep{episode + 1}.pth"))
+            save_training_plots(experiment_dir, rewards_history, losses_history, 
+                              epsilons_history, episode + 1)
 
     # Save final model and results
-    agent.save("models/cartpole_final.pth")
+    agent.save(os.path.join(experiment_dir, "models", "final_model.pth"))
     logger.save()
     plotter.plot_training_progress(
         rewards_history, losses_history, filename="cartpole_training.png"
     )
+    save_training_plots(experiment_dir, rewards_history, losses_history, 
+                       epsilons_history, args.episodes)
 
     env.close()
     print(f"\nTraining completed! Best reward: {best_reward:.2f}")
@@ -624,11 +713,20 @@ def main():
         "--game",
         type=str,
         required=True,
-        choices=["cartpole", "pong", "frozenlake", "snake", "lunarlander", "breakout"],
+        choices=["cartpole", "pong", "frozenlake", "snake", "lunarlander", "breakout", "flappybird", "mario"],
         help="Game to train on",
     )
     parser.add_argument(
         "--episodes", type=int, default=500, help="Number of episodes to train"
+    )
+    parser.add_argument(
+        "--render-every", type=int, default=100, help="Render every N episodes"
+    )
+    parser.add_argument(
+        "--world", type=int, default=1, help="Mario world number (1-8)"
+    )
+    parser.add_argument(
+        "--stage", type=int, default=1, help="Mario stage number (1-4)"
     )
 
     args = parser.parse_args()
@@ -651,6 +749,12 @@ def main():
         train_lunarlander(args)
     elif args.game == "breakout":
         train_breakout(args)
+    elif args.game == "flappybird":
+        from experiments.flappybird.train import train_flappybird
+        train_flappybird(args)
+    elif args.game == "mario":
+        from experiments.mario.train import train_mario
+        train_mario(args)
 
 
 if __name__ == "__main__":
