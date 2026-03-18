@@ -1,8 +1,8 @@
-"""Environments package."""
+"""Game environments package."""
 
-from .snake_env import SnakeEnv
 from .flappybird_env import FlappyBirdEnv
-from .mario_env import MarioEnv
-from .dino_env import DinoBirdEnv
+from .dino_env import DinoEnv
+from .snake_env import SnakeEnv
+from .gym_env import GymEnv
 
-__all__ = ["SnakeEnv", "FlappyBirdEnv", "MarioEnv", "DinoBirdEnv"]
+__all__ = ["FlappyBirdEnv", "DinoEnv", "SnakeEnv", "GymEnv"]

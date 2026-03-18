@@ -1,121 +1,65 @@
 """
-Evaluation and comparison script for trained models.
+Evaluate a trained model.
+
+Usage:
+    python evaluate.py --game flappybird --model outputs/flappybird_dqn/models/best.pth
+    python evaluate.py --game dino --agent dueling_dqn --model outputs/dino_dueling_dqn/models/best.pth --episodes 20
+    python evaluate.py --game cartpole --model outputs/cartpole_dqn/models/best.pth --render
 """
 
 import argparse
-import json
-import os
-
-import matplotlib.pyplot as plt
 import numpy as np
 
-from utils import Plotter
+from config import GAMES
+from train import make_env, make_agent, AGENT_MAP
 
 
-def load_training_log(log_file):
-    """Load training log from JSON file."""
-    with open(log_file, "r") as f:
-        data = json.load(f)
-    return data
+def evaluate(args):
+    game_cfg = GAMES[args.game]
+    agent_name = args.agent or game_cfg["default_agent"]
+    env_kwargs = game_cfg.get("env_kwargs", {})
 
+    env = make_env(game_cfg["env"], render=args.render, **env_kwargs)
+    agent = make_agent(agent_name, env.get_state_size(), env.get_action_size(), game_cfg["agent_config"])
+    agent.load(args.model)
 
-def analyze_training(log_file):
-    """Analyze training results."""
-    data = load_training_log(log_file)
+    print(f"Evaluating {args.game} with {agent_name}, model: {args.model}")
+    print(f"Running {args.episodes} episodes...\n")
 
-    episodes = data["episodes"]
-    rewards = [ep["reward"] for ep in episodes]
+    scores = []
+    for ep in range(1, args.episodes + 1):
+        state = env.reset()
+        total_steps = 0
+        for _ in range(game_cfg["max_steps"]):
+            action = agent.select_action(state, training=False)
+            state, _, done, info = env.step(action)
+            total_steps += 1
+            if done:
+                break
+        score = info.get("score", 0)
+        scores.append(score)
+        print(f"  Episode {ep:>3d}  Score: {score:>8.1f}  Steps: {total_steps}")
 
-    print(f"\nAnalysis for: {data['experiment_name']}")
-    print("=" * 60)
-    print(f"Total episodes: {len(episodes)}")
-    print(f"Average reward: {np.mean(rewards):.2f} ± {np.std(rewards):.2f}")
-    print(f"Max reward: {np.max(rewards):.2f}")
-    print(f"Min reward: {np.min(rewards):.2f}")
+    env.close()
 
-    # Last 100 episodes
-    if len(rewards) >= 100:
-        last_100 = rewards[-100:]
-        print(f"\nLast 100 episodes:")
-        print(f"Average reward: {np.mean(last_100):.2f} ± {np.std(last_100):.2f}")
-
-    # Check if loss data exists
-    if "loss" in episodes[0]:
-        losses = [ep["loss"] for ep in episodes if ep.get("loss", 0) > 0]
-        if losses:
-            print(f"\nTraining loss:")
-            print(f"Average loss: {np.mean(losses):.4f}")
-            print(f"Final loss: {np.mean(losses[-100:]):.4f}")
-
-    print("=" * 60)
-
-
-def compare_experiments(log_files, output_file="comparison.png"):
-    """Compare multiple experiments."""
-    plotter = Plotter()
-
-    data_dict = {}
-    for log_file in log_files:
-        if not os.path.exists(log_file):
-            print(f"Warning: {log_file} not found, skipping...")
-            continue
-
-        data = load_training_log(log_file)
-        rewards = [ep["reward"] for ep in data["episodes"]]
-        data_dict[data["experiment_name"]] = rewards
-
-    if data_dict:
-        plotter.plot_comparison(
-            data_dict,
-            ylabel="Reward",
-            title="Training Comparison",
-            filename=output_file,
-        )
-
-
-def plot_all_results():
-    """Plot results for all available experiments."""
-    log_dir = "results/logs"
-
-    if not os.path.exists(log_dir):
-        print(f"No logs found in {log_dir}")
-        return
-
-    log_files = [
-        os.path.join(log_dir, f) for f in os.listdir(log_dir) if f.endswith(".json")
-    ]
-
-    if not log_files:
-        print("No training logs found!")
-        return
-
-    print(f"\nFound {len(log_files)} training logs\n")
-
-    # Analyze each
-    for log_file in log_files:
-        analyze_training(log_file)
-
-    # Compare if multiple
-    if len(log_files) > 1:
-        compare_experiments(log_files, "all_experiments_comparison.png")
+    print(f"\n{'='*40}")
+    print(f"  Episodes : {len(scores)}")
+    print(f"  Avg Score: {np.mean(scores):.2f}")
+    print(f"  Max Score: {np.max(scores):.1f}")
+    print(f"  Min Score: {np.min(scores):.1f}")
+    print(f"  Std      : {np.std(scores):.2f}")
+    print(f"{'='*40}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate training results")
-    parser.add_argument("--analyze", type=str, help="Path to log file to analyze")
-    parser.add_argument("--compare", nargs="+", help="Paths to log files to compare")
-    parser.add_argument("--all", action="store_true", help="Analyze all available logs")
-
+    parser = argparse.ArgumentParser(description="Evaluate trained RL agent")
+    parser.add_argument("--game", required=True, choices=list(GAMES.keys()))
+    parser.add_argument("--agent", default=None, choices=list(AGENT_MAP.keys()))
+    parser.add_argument("--model", required=True, help="Path to model checkpoint")
+    parser.add_argument("--episodes", type=int, default=10)
+    parser.add_argument("--render", action="store_true", help="Render game during evaluation")
     args = parser.parse_args()
-
-    if args.all:
-        plot_all_results()
-    elif args.analyze:
-        analyze_training(args.analyze)
-    elif args.compare:
-        compare_experiments(args.compare)
-    else:
-        parser.print_help()
+    evaluate(args)
 
 
 if __name__ == "__main__":

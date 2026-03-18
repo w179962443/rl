@@ -1,6 +1,4 @@
-"""
-Q-Learning Agent implementation for discrete state spaces.
-"""
+"""Tabular Q-Learning Agent for discrete state spaces."""
 
 import pickle
 
@@ -10,104 +8,54 @@ from .base_agent import BaseAgent
 
 
 class QLearningAgent(BaseAgent):
-    """Q-Learning agent for tabular environments."""
+    """Q-Learning agent with epsilon-greedy exploration."""
 
-    def __init__(self, state_size, action_size, config=None):
-        """
-        Initialize Q-Learning agent.
-
-        Args:
-            state_size: Size of state space (number of states)
-            action_size: Size of action space
-            config: Configuration dictionary
-        """
+    def __init__(self, state_size: int, action_size: int, config: dict = None):
         super().__init__(state_size, action_size, config)
+        c = self.config
+        self.lr = c.get("learning_rate", 0.1)
+        self.gamma = c.get("gamma", 0.99)
+        self.epsilon = c.get("epsilon_start", 1.0)
+        self.epsilon_end = c.get("epsilon_end", 0.01)
+        self.epsilon_decay = c.get("epsilon_decay", 0.9995)
 
-        # Hyperparameters
-        self.learning_rate = config.get("learning_rate", 0.1)
-        self.gamma = config.get("gamma", 0.99)
-        self.epsilon_start = config.get("epsilon_start", 1.0)
-        self.epsilon_end = config.get("epsilon_end", 0.01)
-        self.epsilon_decay = config.get("epsilon_decay", 0.995)
-
-        # Q-table
         self.q_table = np.zeros((state_size, action_size))
+        self._last_transition = None
+        self.episodes_done = 0
 
-        # Current epsilon
-        self.epsilon = self.epsilon_start
-
-    def select_action(self, state, epsilon=None):
-        """
-        Select action using epsilon-greedy policy.
-
-        Args:
-            state: Current state (integer)
-            epsilon: Exploration rate (if None, use internal epsilon)
-
-        Returns:
-            Selected action
-        """
-        if epsilon is None:
-            epsilon = self.epsilon
-
-        if np.random.random() < epsilon:
+    def select_action(self, state, training: bool = True) -> int:
+        if training and np.random.random() < self.epsilon:
             return np.random.randint(self.action_size)
-        else:
-            return np.argmax(self.q_table[state])
+        return int(np.argmax(self.q_table[state]))
 
-    def train_step(self, state, action, reward, next_state, done):
-        """
-        Update Q-table using Q-learning update rule.
+    def store_experience(self, state, action, reward, next_state, done):
+        self._last_transition = (state, action, reward, next_state, done)
 
-        Args:
-            state: Current state
-            action: Action taken
-            reward: Reward received
-            next_state: Next state
-            done: Whether episode is done
-
-        Returns:
-            TD error (absolute difference)
-        """
-        # Current Q-value
-        current_q = self.q_table[state, action]
-
-        # TD target
-        if done:
-            td_target = reward
-        else:
-            td_target = reward + self.gamma * np.max(self.q_table[next_state])
-
-        # TD error
-        td_error = td_target - current_q
-
-        # Update Q-value
-        self.q_table[state, action] += self.learning_rate * td_error
-
+    def train_step(self) -> float:
+        if self._last_transition is None:
+            return 0.0
+        state, action, reward, next_state, done = self._last_transition
+        td_target = reward if done else reward + self.gamma * np.max(self.q_table[next_state])
+        td_error = td_target - self.q_table[state, action]
+        self.q_table[state, action] += self.lr * td_error
+        self._last_transition = None
         return abs(td_error)
 
-    def decay_epsilon(self):
-        """Decay epsilon for exploration."""
+    def end_episode(self):
         self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
+        self.episodes_done += 1
 
-    def save(self, filepath):
-        """Save Q-table to file."""
+    def save(self, filepath: str):
         with open(filepath, "wb") as f:
-            pickle.dump(
-                {
-                    "q_table": self.q_table,
-                    "epsilon": self.epsilon,
-                    "state_size": self.state_size,
-                    "action_size": self.action_size,
-                },
-                f,
-            )
+            pickle.dump({
+                "q_table": self.q_table,
+                "epsilon": self.epsilon,
+                "episodes_done": self.episodes_done,
+            }, f)
 
-    def load(self, filepath):
-        """Load Q-table from file."""
+    def load(self, filepath: str):
         with open(filepath, "rb") as f:
             data = pickle.load(f)
-            self.q_table = data["q_table"]
-            self.epsilon = data["epsilon"]
-            self.state_size = data["state_size"]
-            self.action_size = data["action_size"]
+        self.q_table = data["q_table"]
+        self.epsilon = data.get("epsilon", self.epsilon_end)
+        self.episodes_done = data.get("episodes_done", 0)

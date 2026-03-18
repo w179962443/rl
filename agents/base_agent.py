@@ -1,65 +1,41 @@
-"""
-Base Agent class for all reinforcement learning agents.
-"""
+"""Base Agent class for all reinforcement learning agents."""
 
 from abc import ABC, abstractmethod
-
-import numpy as np
 
 
 class BaseAgent(ABC):
     """Base class for all RL agents."""
 
-    def __init__(self, state_size, action_size, config=None):
-        """
-        Initialize the agent.
-
-        Args:
-            state_size: Size of the state space
-            action_size: Size of the action space
-            config: Configuration dictionary
-        """
+    def __init__(self, state_size: int, action_size: int, config: dict = None):
         self.state_size = state_size
         self.action_size = action_size
         self.config = config or {}
 
     @abstractmethod
-    def select_action(self, state, epsilon=0.0):
-        """
-        Select an action given the current state.
-
-        Args:
-            state: Current state
-            epsilon: Exploration rate for epsilon-greedy policy
-
-        Returns:
-            Selected action
-        """
+    def select_action(self, state, training: bool = True) -> int:
+        """Select an action given the current state."""
         pass
 
     @abstractmethod
-    def train_step(self, state, action, reward, next_state, done):
-        """
-        Perform one training step.
-
-        Args:
-            state: Current state
-            action: Action taken
-            reward: Reward received
-            next_state: Next state
-            done: Whether episode is done
-
-        Returns:
-            Loss value (if applicable)
-        """
+    def store_experience(self, state, action, reward, next_state, done):
+        """Store a transition for training."""
         pass
 
     @abstractmethod
-    def save(self, filepath):
+    def train_step(self) -> float:
+        """Perform one training step. Returns loss value."""
+        pass
+
+    @abstractmethod
+    def save(self, filepath: str):
         """Save the agent's model."""
         pass
 
     @abstractmethod
-    def load(self, filepath):
+    def load(self, filepath: str):
         """Load the agent's model."""
+        pass
+
+    def end_episode(self):
+        """Called at the end of each episode. Override for per-episode updates."""
         pass

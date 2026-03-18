@@ -1,134 +1,135 @@
 """
-Configuration file for hyperparameters.
+Game configurations — each entry defines environment, agent, and hyperparameters.
+
+Usage:
+    python train.py --game flappybird
+    python train.py --game flappybird --agent reinforce
+    python train.py --game dino --agent dueling_dqn
 """
 
-# CartPole configuration
-CARTPOLE_CONFIG = {
-    "agent": "DQN",
-    "env_name": "CartPole-v1",
-    "episodes": 500,
-    "hyperparameters": {
-        "gamma": 0.99,
-        "learning_rate": 0.001,
-        "batch_size": 64,
-        "memory_size": 10000,
-        "target_update_freq": 10,
-        "hidden_sizes": [128, 128],
+GAMES = {
+    "flappybird": {
+        "env": "flappybird",
+        "default_agent": "dqn",
+        "episodes": 10000,
+        "max_steps": 10000,
+        "eval_every": 200,
+        "eval_episodes": 10,
+        "save_every": 200,
+        "log_every": 50,
+        "agent_config": {
+            "gamma": 0.99,
+            "learning_rate": 3e-4,
+            "batch_size": 64,
+            "buffer_size": 100_000,
+            "hidden_size": 256,
+            "target_update": 10,
+            "epsilon_start": 1.0,
+            "epsilon_end": 0.01,
+            "epsilon_decay": 0.9992,
+        },
     },
-    "exploration": {
-        "epsilon_start": 1.0,
-        "epsilon_end": 0.01,
-        "epsilon_decay": 0.995,
+    "dino": {
+        "env": "dino",
+        "default_agent": "dueling_dqn",
+        "episodes": 8000,
+        "max_steps": 5000,
+        "eval_every": 200,
+        "eval_episodes": 10,
+        "save_every": 200,
+        "log_every": 50,
+        "warmup_steps": 2000,
+        "agent_config": {
+            "gamma": 0.99,
+            "learning_rate": 3e-4,
+            "batch_size": 64,
+            "buffer_size": 100_000,
+            "hidden_size": 256,
+            "target_update": 500,
+            "epsilon_start": 1.0,
+            "epsilon_end": 0.01,
+            "epsilon_decay": 0.9995,
+        },
     },
-    "success_threshold": 195,
-}
-
-# Pong configuration
-PONG_CONFIG = {
-    "agent": "DQN",
-    "env_name": "ALE/Pong-v5",
-    "episodes": 2000,
-    "hyperparameters": {
-        "gamma": 0.99,
-        "learning_rate": 0.0001,
-        "batch_size": 32,
-        "memory_size": 50000,
-        "target_update_freq": 100,
-        "hidden_sizes": [512, 256],
+    "snake": {
+        "env": "snake",
+        "default_agent": "dqn",
+        "episodes": 5000,
+        "max_steps": 500,
+        "eval_every": 200,
+        "eval_episodes": 10,
+        "save_every": 200,
+        "log_every": 50,
+        "agent_config": {
+            "gamma": 0.99,
+            "learning_rate": 1e-3,
+            "batch_size": 64,
+            "buffer_size": 50_000,
+            "hidden_size": 256,
+            "target_update": 10,
+            "epsilon_start": 1.0,
+            "epsilon_end": 0.01,
+            "epsilon_decay": 0.999,
+        },
     },
-    "exploration": {
-        "epsilon_start": 1.0,
-        "epsilon_end": 0.1,
-        "epsilon_decay": 0.9995,
+    "cartpole": {
+        "env": "CartPole-v1",
+        "default_agent": "dqn",
+        "episodes": 500,
+        "max_steps": 500,
+        "eval_every": 50,
+        "eval_episodes": 10,
+        "save_every": 100,
+        "log_every": 10,
+        "agent_config": {
+            "gamma": 0.99,
+            "learning_rate": 1e-3,
+            "batch_size": 64,
+            "buffer_size": 10_000,
+            "hidden_size": 128,
+            "target_update": 10,
+            "epsilon_start": 1.0,
+            "epsilon_end": 0.01,
+            "epsilon_decay": 0.995,
+        },
     },
-    "success_threshold": 18,
-}
-
-# FrozenLake configuration
-FROZENLAKE_CONFIG = {
-    "agent": "QLearning",
-    "env_name": "FrozenLake-v1",
-    "env_kwargs": {"is_slippery": True},
-    "episodes": 10000,
-    "hyperparameters": {
-        "learning_rate": 0.1,
-        "gamma": 0.99,
-        "epsilon_start": 1.0,
-        "epsilon_end": 0.01,
-        "epsilon_decay": 0.9995,
+    "lunarlander": {
+        "env": "LunarLander-v2",
+        "default_agent": "dqn",
+        "episodes": 1000,
+        "max_steps": 1000,
+        "eval_every": 100,
+        "eval_episodes": 10,
+        "save_every": 100,
+        "log_every": 10,
+        "agent_config": {
+            "gamma": 0.99,
+            "learning_rate": 5e-4,
+            "batch_size": 64,
+            "buffer_size": 100_000,
+            "hidden_size": 256,
+            "target_update": 10,
+            "epsilon_start": 1.0,
+            "epsilon_end": 0.01,
+            "epsilon_decay": 0.995,
+        },
     },
-    "success_threshold": 0.7,  # 70% success rate
-}
-
-# Snake configuration
-SNAKE_CONFIG = {
-    "agent": "DQN",
-    "env_name": "Snake-v0",
-    "episodes": 1000,
-    "hyperparameters": {
-        "gamma": 0.99,
-        "learning_rate": 0.001,
-        "batch_size": 64,
-        "memory_size": 10000,
-        "target_update_freq": 10,
-        "hidden_sizes": [256, 256],
+    "frozenlake": {
+        "env": "FrozenLake-v1",
+        "env_kwargs": {"is_slippery": True},
+        "default_agent": "qlearning",
+        "episodes": 10000,
+        "max_steps": 100,
+        "eval_every": 500,
+        "eval_episodes": 100,
+        "save_every": 1000,
+        "log_every": 500,
+        "agent_config": {
+            "learning_rate": 0.1,
+            "gamma": 0.99,
+            "epsilon_start": 1.0,
+            "epsilon_end": 0.01,
+            "epsilon_decay": 0.9995,
+        },
     },
-    "exploration": {
-        "epsilon_start": 1.0,
-        "epsilon_end": 0.01,
-        "epsilon_decay": 0.995,
-    },
-    "success_threshold": 50,  # Average reward > 50
-}
-
-# LunarLander configuration
-LUNARLANDER_CONFIG = {
-    "agent": "DQN",
-    "env_name": "LunarLander-v2",
-    "episodes": 1000,
-    "hyperparameters": {
-        "gamma": 0.99,
-        "learning_rate": 0.0005,
-        "batch_size": 64,
-        "memory_size": 100000,
-        "target_update_freq": 10,
-        "hidden_sizes": [256, 256],
-    },
-    "exploration": {
-        "epsilon_start": 1.0,
-        "epsilon_end": 0.01,
-        "epsilon_decay": 0.995,
-    },
-    "success_threshold": 200,  # Average reward > 200 over 100 episodes
-}
-
-# Breakout configuration
-BREAKOUT_CONFIG = {
-    "agent": "DQN",
-    "env_name": "ALE/Breakout-v5",
-    "episodes": 5000,
-    "hyperparameters": {
-        "gamma": 0.99,
-        "learning_rate": 0.00025,
-        "batch_size": 32,
-        "memory_size": 100000,
-        "target_update_freq": 1000,
-        "hidden_sizes": [512, 256],
-    },
-    "exploration": {
-        "epsilon_start": 1.0,
-        "epsilon_end": 0.1,
-        "epsilon_decay": 0.9999,
-    },
-    "success_threshold": 50,  # Average score > 50
-}
-
-# All configurations
-CONFIGS = {
-    "cartpole": CARTPOLE_CONFIG,
-    "pong": PONG_CONFIG,
-    "frozenlake": FROZENLAKE_CONFIG,
-    "snake": SNAKE_CONFIG,
-    "lunarlander": LUNARLANDER_CONFIG,
-    "breakout": BREAKOUT_CONFIG,
 }

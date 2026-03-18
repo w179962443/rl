@@ -1,791 +1,208 @@
 """
-Training script for all games.
+Unified training script for all games and agents.
+
+Usage:
+    python train.py --game flappybird
+    python train.py --game dino --agent dueling_dqn
+    python train.py --game cartpole --agent a2c
+    python train.py --game flappybird --agent reinforce --episodes 5000
+    python train.py --game flappybird --resume outputs/flappybird_dqn/models/best.pth
 """
 
-import argparse
 import os
-import pickle
-
-import gymnasium as gym
+import time
+import argparse
 import numpy as np
-import matplotlib.pyplot as plt
 
-from agents import DQNAgent, QLearningAgent
-from envs import SnakeEnv
-from utils import Logger, Plotter
+from config import GAMES
+from utils import TrainingLogger
 
 
-def save_training_plots(experiment_dir, rewards, losses, epsilons, episode):
-    """
-    Save training progress plots.
+# ── Environment factory ──────────────────────────────────────────────────────
 
-    Args:
-        experiment_dir: Directory to save plots
-        rewards: List of episode rewards
-        losses: List of losses
-        epsilons: List of epsilon values
-        episode: Current episode number
-    """
-    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-
-    # Plot rewards
-    axes[0, 0].plot(rewards, alpha=0.3, label="Episode Reward")
-    if len(rewards) >= 100:
-        avg_rewards = [
-            np.mean(rewards[max(0, i - 99) : i + 1]) for i in range(len(rewards))
-        ]
-        axes[0, 0].plot(avg_rewards, label="Avg (100 ep)", linewidth=2)
-    axes[0, 0].set_xlabel("Episode")
-    axes[0, 0].set_ylabel("Reward")
-    axes[0, 0].set_title("Training Rewards")
-    axes[0, 0].legend()
-    axes[0, 0].grid(True)
-
-    # Plot losses
-    if len(losses) > 0:
-        axes[0, 1].plot(losses, alpha=0.6, label="Loss")
-        axes[0, 1].set_xlabel("Episode")
-        axes[0, 1].set_ylabel("Loss")
-        axes[0, 1].set_title("Training Loss")
-        axes[0, 1].legend()
-        axes[0, 1].grid(True)
-
-    # Plot epsilon
-    if len(epsilons) > 0:
-        axes[1, 0].plot(epsilons, label="Epsilon")
-        axes[1, 0].set_xlabel("Episode")
-        axes[1, 0].set_ylabel("Epsilon")
-        axes[1, 0].set_title("Exploration Rate")
-        axes[1, 0].legend()
-        axes[1, 0].grid(True)
-
-    # Stats
-    stats_text = f"Episode: {episode}\n"
-    stats_text += (
-        f"Avg Reward (last 100): {np.mean(rewards[-100:]):.2f}\n"
-        if len(rewards) >= 100
-        else f"Avg Reward: {np.mean(rewards):.2f}\n"
-    )
-    stats_text += f"Max Reward: {np.max(rewards):.2f}\n"
-
-    axes[1, 1].text(
-        0.1,
-        0.5,
-        stats_text,
-        fontsize=14,
-        verticalalignment="center",
-        family="monospace",
-    )
-    axes[1, 1].axis("off")
-
-    plt.tight_layout()
-
-    # Save plot
-    plot_path = os.path.join(experiment_dir, "logs", f"training_episode_{episode}.png")
-    plt.savefig(plot_path, dpi=100, bbox_inches="tight")
-    plt.close()
-
-    print(f"Training plot saved to {plot_path}")
+def make_env(env_name: str, render: bool = False, **kwargs):
+    """Create an environment by name."""
+    if env_name == "flappybird":
+        from envs import FlappyBirdEnv
+        return FlappyBirdEnv(render=render)
+    elif env_name == "dino":
+        from envs import DinoEnv
+        return DinoEnv(render=render)
+    elif env_name == "snake":
+        from envs import SnakeEnv
+        return SnakeEnv(render=render)
+    else:
+        from envs import GymEnv
+        return GymEnv(env_name, render=render, **kwargs)
 
 
-def train_cartpole(args):
-    """Train DQN on CartPole."""
-    print("=" * 50)
-    print("Training DQN on CartPole")
-    print("=" * 50)
+# ── Agent factory ────────────────────────────────────────────────────────────
 
-    # Create experiment directory
-    experiment_dir = "experiments/cartpole"
-    os.makedirs(os.path.join(experiment_dir, "models"), exist_ok=True)
-    os.makedirs(os.path.join(experiment_dir, "logs"), exist_ok=True)
+AGENT_MAP = {
+    "dqn": "agents.DQNAgent",
+    "dueling_dqn": "agents.DuelingDQNAgent",
+    "reinforce": "agents.REINFORCEAgent",
+    "a2c": "agents.A2CAgent",
+    "qlearning": "agents.QLearningAgent",
+}
 
-    # Create environment
-    env = gym.make("CartPole-v1")
-    state_size = env.observation_space.shape[0]
-    action_size = env.action_space.n
 
-    # Create agent
-    config = {
-        "gamma": 0.99,
-        "learning_rate": 0.001,
-        "batch_size": 64,
-        "memory_size": 10000,
-        "target_update_freq": 10,
-        "hidden_sizes": [128, 128],
-        "epsilon_start": 1.0,
-        "epsilon_end": 0.01,
-        "epsilon_decay": 0.995,
+def make_agent(agent_name: str, state_size: int, action_size: int, config: dict):
+    """Create an agent by name."""
+    import agents
+    cls_map = {
+        "dqn": agents.DQNAgent,
+        "dueling_dqn": agents.DuelingDQNAgent,
+        "reinforce": agents.REINFORCEAgent,
+        "a2c": agents.A2CAgent,
+        "qlearning": agents.QLearningAgent,
     }
-    agent = DQNAgent(state_size, action_size, config)
+    if agent_name not in cls_map:
+        raise ValueError(f"Unknown agent: {agent_name}. Choose from {list(cls_map)}")
+    return cls_map[agent_name](state_size, action_size, config)
 
-    # Training parameters
-    epsilon = agent.epsilon
-    render_every = getattr(args, "render_every", 100)
 
-    # Logger and plotter
-    logger = Logger(
-        log_dir=os.path.join(experiment_dir, "logs"),
-        experiment_name=f"cartpole_{args.episodes}ep",
-    )
-    plotter = Plotter(save_dir=os.path.join(experiment_dir, "logs"))
+# ── Evaluation ───────────────────────────────────────────────────────────────
 
-    # Training
-    rewards_history = []
-    losses_history = []
-    epsilons_history = []
-    best_reward = -float("inf")
-
-    for episode in range(args.episodes):
-        # Decide if we should render this episode
-        should_render = episode % render_every == 0
-        if should_render:
-            if hasattr(env, "render_mode"):
-                env.close()
-                env = gym.make("CartPole-v1", render_mode="human")
-            else:
-                env = gym.make("CartPole-v1", render_mode="human")
-        elif episode > 0 and (episode - 1) % render_every == 0:
-            # Close render mode after rendering episode
-            env.close()
-            env = gym.make("CartPole-v1")
-
-        state, _ = env.reset()
-        episode_reward = 0
-        episode_loss = 0
-        steps = 0
-        done = False
-
-        while not done:
-            # Select action
-            action = agent.select_action(state, epsilon)
-
-            # Take action
-            next_state, reward, terminated, truncated, _ = env.step(action)
-            done = terminated or truncated
-
-            # Train
-            loss = agent.train_step(state, action, reward, next_state, done)
-
-            episode_reward += reward
-            episode_loss += loss
-            steps += 1
-            state = next_state
-
-        # Decay epsilon
-        epsilon = max(agent.epsilon_min, epsilon * agent.epsilon_decay)
-        agent.epsilon = epsilon
-
-        # Log episode
-        rewards_history.append(episode_reward)
-        losses_history.append(episode_loss / steps if steps > 0 else 0)
-        epsilons_history.append(epsilon)
-        logger.log_episode(
-            episode, episode_reward, steps, epsilon, episode_loss / steps
-        )
-
-        # Print progress
-        if episode % 10 == 0:
-            avg_reward = np.mean(rewards_history[-10:])
-            logger.print_episode(
-                episode, avg_reward, steps, epsilon, episode_loss / steps
-            )
-
-        # Save best model
-        if episode_reward > best_reward:
-            best_reward = episode_reward
-            agent.save(os.path.join(experiment_dir, "models", "best_model.pth"))
-
-        # Save checkpoint and plots
-        if (episode + 1) % 100 == 0:
-            agent.save(
-                os.path.join(
-                    experiment_dir, "models", f"checkpoint_ep{episode + 1}.pth"
-                )
-            )
-            save_training_plots(
-                experiment_dir,
-                rewards_history,
-                losses_history,
-                epsilons_history,
-                episode + 1,
-            )
-
-    # Save final model and results
-    agent.save(os.path.join(experiment_dir, "models", "final_model.pth"))
-    logger.save()
-    plotter.plot_training_progress(
-        rewards_history, losses_history, filename="cartpole_training.png"
-    )
-    save_training_plots(
-        experiment_dir, rewards_history, losses_history, epsilons_history, args.episodes
-    )
-
+def evaluate(env_name, agent, num_episodes: int = 10, max_steps: int = 5000, **env_kwargs):
+    """Run evaluation episodes and return average score."""
+    env = make_env(env_name, render=False, **env_kwargs)
+    scores = []
+    for _ in range(num_episodes):
+        state = env.reset()
+        for _ in range(max_steps):
+            action = agent.select_action(state, training=False)
+            state, _, done, info = env.step(action)
+            if done:
+                break
+        scores.append(info.get("score", 0))
     env.close()
-    print(f"\nTraining completed! Best reward: {best_reward:.2f}")
+    return float(np.mean(scores)), scores
 
 
-def train_pong(args):
-    """Train DQN on Pong."""
-    print("=" * 50)
-    print("Training DQN on Pong")
-    print("=" * 50)
+# ── Training loop ────────────────────────────────────────────────────────────
 
-    # Create environment
-    env = gym.make("ALE/Pong-v5")
-    state_size = np.prod(env.observation_space.shape)
-    action_size = env.action_space.n
+def train(args):
+    game_cfg = GAMES[args.game]
+    agent_name = args.agent or game_cfg["default_agent"]
+    episodes = args.episodes or game_cfg["episodes"]
+    max_steps = game_cfg["max_steps"]
+    eval_every = args.eval_every or game_cfg["eval_every"]
+    eval_episodes = game_cfg.get("eval_episodes", 10)
+    save_every = game_cfg.get("save_every", 200)
+    log_every = game_cfg.get("log_every", 50)
+    warmup = game_cfg.get("warmup_steps", 0)
+    env_kwargs = game_cfg.get("env_kwargs", {})
 
-    # Create agent
-    config = {
-        "gamma": 0.99,
-        "learning_rate": 0.0001,
-        "batch_size": 32,
-        "memory_size": 50000,
-        "target_update_freq": 100,
-        "hidden_sizes": [512, 256],
-    }
-    agent = DQNAgent(state_size, action_size, config)
+    # Output directory
+    out_dir = os.path.join("outputs", f"{args.game}_{agent_name}")
+    model_dir = os.path.join(out_dir, "models")
+    log_dir = os.path.join(out_dir, "logs")
+    os.makedirs(model_dir, exist_ok=True)
+    os.makedirs(log_dir, exist_ok=True)
 
-    # Training parameters
-    epsilon_start = 1.0
-    epsilon_end = 0.1
-    epsilon_decay = 0.9995
-    epsilon = epsilon_start
+    # Create env and agent
+    env = make_env(game_cfg["env"], render=False, **env_kwargs)
+    agent = make_agent(agent_name, env.get_state_size(), env.get_action_size(), game_cfg["agent_config"])
 
-    # Logger and plotter
-    logger = Logger(experiment_name=f"pong_{args.episodes}ep")
-    plotter = Plotter()
+    # Resume
+    logger = TrainingLogger(log_dir)
+    start_ep = 0
+    if args.resume and os.path.exists(args.resume):
+        agent.load(args.resume)
+        if logger.load():
+            start_ep = len(logger.scores)
+        print(f"Resumed from {args.resume}, starting at episode {start_ep}")
 
-    # Training
-    rewards_history = []
-    losses_history = []
-    best_reward = -float("inf")
+    print("=" * 60)
+    print(f"  Game: {args.game}  |  Agent: {agent_name}  |  Episodes: {episodes}")
+    print(f"  Eval every {eval_every} episodes ({eval_episodes} eval eps)")
+    print(f"  Output: {out_dir}")
+    print("=" * 60)
 
-    for episode in range(args.episodes):
-        state, _ = env.reset()
-        state = state.flatten()  # Flatten image
-        episode_reward = 0
-        episode_loss = 0
-        steps = 0
-        done = False
+    global_step = 0
+    start_time = time.time()
 
-        while not done:
-            # Select action
-            action = agent.select_action(state, epsilon)
+    for ep in range(start_ep, start_ep + episodes):
+        state = env.reset()
+        ep_reward = 0.0
+        ep_loss = []
 
-            # Take action
-            next_state, reward, terminated, truncated, _ = env.step(action)
-            next_state = next_state.flatten()
-            done = terminated or truncated
+        for step in range(max_steps):
+            action = agent.select_action(state, training=True)
+            next_state, reward, done, info = env.step(action)
+            agent.store_experience(state, action, reward, next_state, done)
 
-            # Train
-            loss = agent.train_step(state, action, reward, next_state, done)
+            if global_step >= warmup:
+                loss = agent.train_step()
+                if loss > 0:
+                    ep_loss.append(loss)
 
-            episode_reward += reward
-            episode_loss += loss
-            steps += 1
             state = next_state
-
-            # Limit episode length
-            if steps >= 10000:
+            ep_reward += reward
+            global_step += 1
+            if done:
                 break
 
-        # Decay epsilon
-        epsilon = max(epsilon_end, epsilon * epsilon_decay)
+        agent.end_episode()
+        score = info.get("score", ep_reward)
+        avg_loss = float(np.mean(ep_loss)) if ep_loss else 0.0
+        epsilon = getattr(agent, "epsilon", 0.0)
+        logger.log_episode(score, avg_loss, epsilon)
 
-        # Log episode
-        rewards_history.append(episode_reward)
-        losses_history.append(episode_loss / steps if steps > 0 else 0)
-        logger.log_episode(
-            episode, episode_reward, steps, epsilon, episode_loss / steps
-        )
+        # Save best
+        if score >= logger.best_score:
+            agent.save(os.path.join(model_dir, "best.pth"))
 
-        # Print progress
-        if episode % 10 == 0:
-            avg_reward = np.mean(rewards_history[-10:])
-            logger.print_episode(
-                episode, avg_reward, steps, epsilon, episode_loss / steps
+        # Periodic logging
+        if (ep + 1) % log_every == 0:
+            avg100 = np.mean(logger.scores[-100:]) if len(logger.scores) >= 100 else np.mean(logger.scores)
+            elapsed = time.time() - start_time
+            print(
+                f"  Ep {ep+1:>5d}/{start_ep+episodes}"
+                f"  Score={score:>7.1f}"
+                f"  Avg100={avg100:>7.1f}"
+                f"  Best={logger.best_score:>7.1f}"
+                f"  eps={epsilon:.4f}"
+                f"  Loss={avg_loss:.4f}"
+                f"  {elapsed/60:.1f}min"
             )
 
-        # Save best model
-        if episode_reward > best_reward:
-            best_reward = episode_reward
-            os.makedirs("models", exist_ok=True)
-            agent.save("models/pong_best.pth")
-
-        # Save checkpoint
-        if (episode + 1) % 200 == 0:
-            agent.save(f"models/pong_ep{episode + 1}.pth")
-
-    # Save final model and results
-    agent.save("models/pong_final.pth")
-    logger.save()
-    plotter.plot_training_progress(
-        rewards_history, losses_history, filename="pong_training.png"
-    )
-
-    env.close()
-    print(f"\nTraining completed! Best reward: {best_reward:.2f}")
-
-
-def train_frozenlake(args):
-    """Train Q-Learning on FrozenLake."""
-    print("=" * 50)
-    print("Training Q-Learning on FrozenLake")
-    print("=" * 50)
-
-    # Create environment
-    env = gym.make("FrozenLake-v1", is_slippery=True)
-    state_size = env.observation_space.n
-    action_size = env.action_space.n
-
-    # Create agent
-    config = {
-        "learning_rate": 0.1,
-        "gamma": 0.99,
-        "epsilon_start": 1.0,
-        "epsilon_end": 0.01,
-        "epsilon_decay": 0.9995,
-    }
-    agent = QLearningAgent(state_size, action_size, config)
-
-    # Logger and plotter
-    logger = Logger(experiment_name=f"frozenlake_{args.episodes}ep")
-    plotter = Plotter()
-
-    # Training
-    rewards_history = []
-    best_avg_reward = -float("inf")
-
-    for episode in range(args.episodes):
-        state, _ = env.reset()
-        episode_reward = 0
-        steps = 0
-        done = False
-
-        while not done:
-            # Select action
-            action = agent.select_action(state)
-
-            # Take action
-            next_state, reward, terminated, truncated, _ = env.step(action)
-            done = terminated or truncated
-
-            # Train
-            agent.train_step(state, action, reward, next_state, done)
-
-            episode_reward += reward
-            steps += 1
-            state = next_state
-
-            # Limit episode length
-            if steps >= 100:
-                break
-
-        # Decay epsilon
-        agent.decay_epsilon()
-
-        # Log episode
-        rewards_history.append(episode_reward)
-        logger.log_episode(episode, episode_reward, steps, agent.epsilon)
-
-        # Print progress
-        if episode % 1000 == 0:
-            avg_reward = (
-                np.mean(rewards_history[-100:])
-                if len(rewards_history) >= 100
-                else np.mean(rewards_history)
+        # Periodic evaluation
+        if (ep + 1) % eval_every == 0:
+            avg_eval, eval_scores = evaluate(
+                game_cfg["env"], agent, eval_episodes, max_steps, **env_kwargs
             )
-            logger.print_episode(episode, avg_reward, steps, agent.epsilon)
+            logger.log_eval(ep + 1, avg_eval)
+            print(f"  >>> EVAL ep {ep+1}: avg={avg_eval:.2f}  scores={eval_scores}")
 
-            # Save best model
-            if avg_reward > best_avg_reward:
-                best_avg_reward = avg_reward
-                os.makedirs("models", exist_ok=True)
-                agent.save("models/frozenlake_best.pkl")
+        # Periodic save
+        if (ep + 1) % save_every == 0:
+            agent.save(os.path.join(model_dir, f"checkpoint_ep{ep+1}.pth"))
+            logger.save()
+            logger.plot()
 
-        # Save checkpoint
-        if (episode + 1) % 2000 == 0:
-            agent.save(f"models/frozenlake_ep{episode + 1}.pkl")
-
-    # Save final model and results
-    agent.save("models/frozenlake_final.pkl")
+    # Final save
+    agent.save(os.path.join(model_dir, "final.pth"))
     logger.save()
-    plotter.plot_training_progress(
-        rewards_history, window=100, filename="frozenlake_training.png"
-    )
-
+    logger.plot(filename="training_final.png")
     env.close()
-    print(f"\nTraining completed! Best average reward: {best_avg_reward:.2f}")
+
+    print(f"\nDone. Best score: {logger.best_score:.1f}")
+    print(f"Models saved to {model_dir}")
 
 
-def train_snake(args):
-    """Train DQN on Snake."""
-    print("=" * 50)
-    print("Training DQN on Snake")
-    print("=" * 50)
-
-    # Create environment
-    env = SnakeEnv(grid_size=10)
-    state_size = env.observation_space.shape[0]
-    action_size = env.action_space.n
-
-    # Create agent
-    config = {
-        "gamma": 0.99,
-        "learning_rate": 0.001,
-        "batch_size": 64,
-        "memory_size": 10000,
-        "target_update_freq": 10,
-        "hidden_sizes": [256, 256],
-    }
-    agent = DQNAgent(state_size, action_size, config)
-
-    # Training parameters
-    epsilon_start = 1.0
-    epsilon_end = 0.01
-    epsilon_decay = 0.99
-    epsilon = epsilon_start
-
-    # Logger and plotter
-    logger = Logger(experiment_name=f"snake_{args.episodes}ep")
-    plotter = Plotter()
-
-    # Training
-    rewards_history = []
-    losses_history = []
-    best_reward = -float("inf")
-
-    for episode in range(args.episodes):
-        state, _ = env.reset()
-        episode_reward = 0
-        episode_loss = 0
-        steps = 0
-        done = False
-
-        while not done:
-            # Select action
-            action = agent.select_action(state, epsilon)
-
-            # Take action
-            next_state, reward, terminated, truncated, _ = env.step(action)
-            done = terminated or truncated
-
-            # Train
-            loss = agent.train_step(state, action, reward, next_state, done)
-
-            episode_reward += reward
-            episode_loss += loss
-            steps += 1
-            state = next_state
-
-            # Limit episode length
-            if steps >= 500:
-                break
-
-        # Decay epsilon
-        epsilon = max(epsilon_end, epsilon * epsilon_decay)
-
-        # Log episode
-        rewards_history.append(episode_reward)
-        losses_history.append(episode_loss / steps if steps > 0 else 0)
-        logger.log_episode(
-            episode,
-            episode_reward,
-            steps,
-            epsilon,
-            episode_loss / steps if steps > 0 else 0,
-        )
-
-        # Print progress
-        if episode % 10 == 0:
-            avg_reward = np.mean(rewards_history[-10:])
-            logger.print_episode(
-                episode,
-                avg_reward,
-                steps,
-                epsilon,
-                episode_loss / steps if steps > 0 else 0,
-            )
-
-        # Save best model
-        if episode_reward > best_reward:
-            best_reward = episode_reward
-            os.makedirs("models", exist_ok=True)
-            agent.save("models/snake_best.pth")
-
-        # Save checkpoint
-        if (episode + 1) % 100 == 0:
-            agent.save(f"models/snake_ep{episode + 1}.pth")
-
-    # Save final model and results
-    agent.save("models/snake_final.pth")
-    logger.save()
-    plotter.plot_training_progress(
-        rewards_history, losses_history, filename="snake_training.png"
-    )
-
-    env.close()
-    print(f"\nTraining completed! Best reward: {best_reward:.2f}")
-
-
-def train_lunarlander(args):
-    """Train DQN on LunarLander."""
-    print("=" * 50)
-    print("Training DQN on LunarLander")
-    print("=" * 50)
-
-    # Create environment
-    env = gym.make("LunarLander-v2")
-    state_size = env.observation_space.shape[0]
-    action_size = env.action_space.n
-
-    # Create agent
-    config = {
-        "gamma": 0.99,
-        "learning_rate": 0.0005,
-        "batch_size": 64,
-        "memory_size": 100000,
-        "target_update_freq": 10,
-        "hidden_sizes": [256, 256],
-    }
-    agent = DQNAgent(state_size, action_size, config)
-
-    # Initialize tracking
-    logger = Logger("lunarlander_training")
-    plotter = Plotter("LunarLander Training")
-    rewards_history = []
-    losses_history = []
-    best_avg_reward = -float("inf")
-
-    # Training loop
-    for episode in range(args.episodes):
-        state, _ = env.reset()
-        episode_reward = 0
-        episode_losses = []
-        steps = 0
-        done = False
-
-        while not done:
-            # Select and take action
-            action = agent.select_action(state, agent.epsilon)
-            next_state, reward, terminated, truncated, _ = env.step(action)
-            done = terminated or truncated
-
-            # Store transition
-            agent.remember(state, action, reward, next_state, done)
-
-            # Train agent
-            loss = agent.train()
-            if loss is not None:
-                episode_losses.append(loss)
-
-            episode_reward += reward
-            steps += 1
-            state = next_state
-
-        # Decay epsilon
-        agent.epsilon = max(agent.epsilon_min, agent.epsilon * agent.epsilon_decay)
-
-        # Update target network
-        if episode % config["target_update_freq"] == 0:
-            agent.update_target_network()
-
-        # Record metrics
-        rewards_history.append(episode_reward)
-        avg_loss = np.mean(episode_losses) if episode_losses else 0
-        losses_history.append(avg_loss)
-
-        # Log progress
-        if episode % 10 == 0:
-            avg_reward = (
-                np.mean(rewards_history[-100:])
-                if len(rewards_history) >= 100
-                else np.mean(rewards_history)
-            )
-            logger.print_episode(episode, avg_reward, steps, agent.epsilon)
-
-            # Save best model
-            if avg_reward > best_avg_reward:
-                best_avg_reward = avg_reward
-                os.makedirs("models", exist_ok=True)
-                agent.save("models/lunarlander_best.pth")
-
-        # Save checkpoint
-        if (episode + 1) % 100 == 0:
-            agent.save(f"models/lunarlander_ep{episode + 1}.pth")
-
-    # Save final model and results
-    agent.save("models/lunarlander_final.pth")
-    logger.save()
-    plotter.plot_training_progress(
-        rewards_history, losses_history, filename="lunarlander_training.png"
-    )
-
-    env.close()
-    print(f"\nTraining completed! Best average reward: {best_avg_reward:.2f}")
-
-
-def train_breakout(args):
-    """Train DQN on Breakout."""
-    print("=" * 50)
-    print("Training DQN on Breakout")
-    print("=" * 50)
-
-    # Create environment
-    env = gym.make("ALE/Breakout-v5")
-    state_size = (
-        env.observation_space.shape[0]
-        * env.observation_space.shape[1]
-        * env.observation_space.shape[2]
-    )
-    action_size = env.action_space.n
-
-    # Create agent
-    config = {
-        "gamma": 0.99,
-        "learning_rate": 0.00025,
-        "batch_size": 32,
-        "memory_size": 100000,
-        "target_update_freq": 1000,
-        "hidden_sizes": [512, 256],
-    }
-    agent = DQNAgent(state_size, action_size, config)
-
-    # Initialize tracking
-    logger = Logger("breakout_training")
-    plotter = Plotter("Breakout Training")
-    rewards_history = []
-    losses_history = []
-    best_avg_reward = -float("inf")
-
-    # Training loop
-    for episode in range(args.episodes):
-        state, _ = env.reset()
-        # Flatten state
-        state = state.flatten()
-        episode_reward = 0
-        episode_losses = []
-        steps = 0
-        done = False
-
-        while not done:
-            # Select and take action
-            action = agent.select_action(state, agent.epsilon)
-            next_state, reward, terminated, truncated, _ = env.step(action)
-            next_state = next_state.flatten()
-            done = terminated or truncated
-
-            # Store transition
-            agent.remember(state, action, reward, next_state, done)
-
-            # Train agent
-            loss = agent.train()
-            if loss is not None:
-                episode_losses.append(loss)
-
-            episode_reward += reward
-            steps += 1
-            state = next_state
-
-        # Decay epsilon
-        agent.epsilon = max(agent.epsilon_min, agent.epsilon * agent.epsilon_decay)
-
-        # Update target network
-        if episode % config["target_update_freq"] == 0:
-            agent.update_target_network()
-
-        # Record metrics
-        rewards_history.append(episode_reward)
-        avg_loss = np.mean(episode_losses) if episode_losses else 0
-        losses_history.append(avg_loss)
-
-        # Log progress
-        if episode % 10 == 0:
-            avg_reward = (
-                np.mean(rewards_history[-100:])
-                if len(rewards_history) >= 100
-                else np.mean(rewards_history)
-            )
-            logger.print_episode(episode, avg_reward, steps, agent.epsilon)
-
-            # Save best model
-            if avg_reward > best_avg_reward:
-                best_avg_reward = avg_reward
-                os.makedirs("models", exist_ok=True)
-                agent.save("models/breakout_best.pth")
-
-        # Save checkpoint
-        if (episode + 1) % 500 == 0:
-            agent.save(f"models/breakout_ep{episode + 1}.pth")
-
-    # Save final model and results
-    agent.save("models/breakout_final.pth")
-    logger.save()
-    plotter.plot_training_progress(
-        rewards_history, losses_history, filename="breakout_training.png"
-    )
-
-    env.close()
-    print(f"\nTraining completed! Best average reward: {best_avg_reward:.2f}")
-
+# ── CLI ──────────────────────────────────────────────────────────────────────
 
 def main():
-    """Main training function."""
-    parser = argparse.ArgumentParser(description="Train RL agents on various games")
-    parser.add_argument(
-        "--game",
-        type=str,
-        required=True,
-        choices=[
-            "cartpole",
-            "pong",
-            "frozenlake",
-            "snake",
-            "lunarlander",
-            "breakout",
-            "flappybird",
-            "mario",
-        ],
-        help="Game to train on",
-    )
-    parser.add_argument(
-        "--episodes", type=int, default=500, help="Number of episodes to train"
-    )
-    parser.add_argument(
-        "--render-every", type=int, default=100, help="Render every N episodes"
-    )
-    parser.add_argument("--world", type=int, default=1, help="Mario world number (1-8)")
-    parser.add_argument("--stage", type=int, default=1, help="Mario stage number (1-4)")
-
+    parser = argparse.ArgumentParser(description="Train RL agents on games")
+    parser.add_argument("--game", required=True, choices=list(GAMES.keys()), help="Game to train on")
+    parser.add_argument("--agent", default=None, choices=list(AGENT_MAP.keys()), help="RL algorithm (default: per-game)")
+    parser.add_argument("--episodes", type=int, default=None, help="Override episode count")
+    parser.add_argument("--eval-every", type=int, default=None, help="Evaluate every N episodes")
+    parser.add_argument("--resume", type=str, default=None, help="Path to checkpoint to resume from")
     args = parser.parse_args()
-
-    # Create directories
-    os.makedirs("models", exist_ok=True)
-    os.makedirs("results/logs", exist_ok=True)
-    os.makedirs("results/plots", exist_ok=True)
-
-    # Train on selected game
-    if args.game == "cartpole":
-        train_cartpole(args)
-    elif args.game == "pong":
-        train_pong(args)
-    elif args.game == "frozenlake":
-        train_frozenlake(args)
-    elif args.game == "snake":
-        train_snake(args)
-    elif args.game == "lunarlander":
-        train_lunarlander(args)
-    elif args.game == "breakout":
-        train_breakout(args)
-    elif args.game == "flappybird":
-        from experiments.flappybird.train import train_flappybird
-
-        train_flappybird(args)
-    elif args.game == "mario":
-        from experiments.mario.train import train_mario
-
-        train_mario(args)
+    train(args)
 
 
 if __name__ == "__main__":

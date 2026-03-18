@@ -1,6 +1,5 @@
-"""Utils package."""
+"""Utilities package."""
 
-from .logger import Logger
-from .plotter import Plotter
+from .logger import TrainingLogger
 
-__all__ = ["Logger", "Plotter"]
+__all__ = ["TrainingLogger"]

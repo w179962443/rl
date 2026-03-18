@@ -1,1 +1,0 @@
-"""Pong experiment module."""

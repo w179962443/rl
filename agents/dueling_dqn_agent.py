@@ -1,4 +1,4 @@
-"""Double DQN Agent with experience replay."""
+"""Double Dueling DQN Agent — separates V(s) and A(s,a) for better value estimation."""
 
 import random
 from collections import deque
@@ -12,34 +12,40 @@ import torch.optim as optim
 from .base_agent import BaseAgent
 
 
-class DQNNetwork(nn.Module):
-    """Standard fully-connected Q-Network."""
+class DuelingNetwork(nn.Module):
+    """Dueling DQN: Q(s,a) = V(s) + A(s,a) - mean(A)."""
 
-    def __init__(self, state_size: int, action_size: int, hidden_size: int = 128):
+    def __init__(self, state_size: int, action_size: int, hidden_size: int = 256):
         super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(state_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, action_size),
+        self.feature = nn.Sequential(
+            nn.Linear(state_size, hidden_size), nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size), nn.ReLU(),
+        )
+        self.value_stream = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size // 2), nn.ReLU(),
+            nn.Linear(hidden_size // 2, 1),
+        )
+        self.adv_stream = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size // 2), nn.ReLU(),
+            nn.Linear(hidden_size // 2, action_size),
         )
         self._init_weights()
 
     def _init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                nn.init.xavier_uniform_(m.weight)
+                nn.init.kaiming_normal_(m.weight)
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
-        return self.net(x)
+        feat = self.feature(x)
+        val = self.value_stream(feat)
+        adv = self.adv_stream(feat)
+        return val + adv - adv.mean(dim=1, keepdim=True)
 
 
-class DQNAgent(BaseAgent):
-    """Double DQN Agent with epsilon-greedy exploration."""
+class DuelingDQNAgent(BaseAgent):
+    """Double Dueling DQN with per-step epsilon decay."""
 
     def __init__(self, state_size: int, action_size: int, config: dict = None):
         super().__init__(state_size, action_size, config)
@@ -48,15 +54,15 @@ class DQNAgent(BaseAgent):
         self.lr = c.get("learning_rate", 3e-4)
         self.batch_size = c.get("batch_size", 64)
         self.buffer_size = c.get("buffer_size", 100_000)
-        self.target_update = c.get("target_update", 10)
+        self.target_update = c.get("target_update", 500)
         self.hidden_size = c.get("hidden_size", 256)
         self.epsilon = c.get("epsilon_start", 1.0)
         self.epsilon_end = c.get("epsilon_end", 0.01)
         self.epsilon_decay = c.get("epsilon_decay", 0.9995)
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.policy_net = DQNNetwork(state_size, action_size, self.hidden_size).to(self.device)
-        self.target_net = DQNNetwork(state_size, action_size, self.hidden_size).to(self.device)
+        self.policy_net = DuelingNetwork(state_size, action_size, self.hidden_size).to(self.device)
+        self.target_net = DuelingNetwork(state_size, action_size, self.hidden_size).to(self.device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
 
@@ -90,7 +96,6 @@ class DQNAgent(BaseAgent):
 
         current_q = self.policy_net(s).gather(1, a)
 
-        # Double DQN: policy net selects action, target net evaluates
         with torch.no_grad():
             next_actions = self.policy_net(ns).argmax(1, keepdim=True)
             next_q = self.target_net(ns).gather(1, next_actions)
@@ -99,16 +104,19 @@ class DQNAgent(BaseAgent):
         loss = F.smooth_l1_loss(current_q, target_q)
         self.optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), 1.0)
+        nn.utils.clip_grad_norm_(self.policy_net.parameters(), 10.0)
         self.optimizer.step()
+
+        # Per-step epsilon decay and target update
+        self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
         self.steps_done += 1
+        if self.steps_done % self.target_update == 0:
+            self.target_net.load_state_dict(self.policy_net.state_dict())
+
         return loss.item()
 
     def end_episode(self):
-        self.epsilon = max(self.epsilon_end, self.epsilon * self.epsilon_decay)
         self.episodes_done += 1
-        if self.episodes_done % self.target_update == 0:
-            self.target_net.load_state_dict(self.policy_net.state_dict())
 
     def save(self, filepath: str):
         torch.save({
