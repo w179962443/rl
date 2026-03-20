@@ -28,34 +28,104 @@ config.py        # 游戏与超参数配置
 pip install -r requirements.txt
 ```
 
-## 训练
+## 训练 & 评估
+
+训练结果保存在 `outputs/<game>_<agent>/`，模型在 `models/`，日志在 `logs/`。
+
+### Flappy Bird
 
 ```bash
-# 使用默认算法训练
+# 训练（默认 DQN）
 python train.py --game flappybird
-python train.py --game dino
-python train.py --game cartpole
-
-# 指定算法
 python train.py --game flappybird --agent reinforce
-python train.py --game dino --agent dqn
-python train.py --game cartpole --agent a2c
+python train.py --game flappybird --agent a2c
 
-# 自定义参数
-python train.py --game flappybird --episodes 5000 --eval-every 100
-
-# 从检查点恢复
-python train.py --game flappybird --resume outputs/flappybird_dqn/models/best.pth
+# 评估
+python evaluate.py --game flappybird --model outputs/flappybird_dqn/models/best.pth
+python evaluate.py --game flappybird --model outputs/flappybird_dqn/models/best.pth --render
+python evaluate.py --game flappybird --agent reinforce --model outputs/flappybird_reinforce/models/best.pth --render
 ```
 
-训练过程中每隔 N 轮自动运行评估，结果保存在 `outputs/<game>_<agent>/logs/` 下。
-
-## 评估
+### Dino
 
 ```bash
-python evaluate.py --game flappybird --model outputs/flappybird_dqn/models/best.pth
+# 训练（默认 Dueling DQN）
+python train.py --game dino
+python train.py --game dino --agent dqn
+python train.py --game dino --agent a2c
+
+# 评估
+python evaluate.py --game dino --model outputs/dino_dueling_dqn/models/best.pth
 python evaluate.py --game dino --model outputs/dino_dueling_dqn/models/best.pth --render
-python evaluate.py --game cartpole --model outputs/cartpole_dqn/models/best.pth --episodes 20
+python evaluate.py --game dino --agent dqn --model outputs/dino_dqn/models/best.pth --render
+```
+
+### Snake
+
+```bash
+# 训练（默认 DQN）
+python train.py --game snake
+python train.py --game snake --agent dueling_dqn
+python train.py --game snake --agent reinforce
+
+# 评估
+python evaluate.py --game snake --model outputs/snake_dqn/models/best.pth
+python evaluate.py --game snake --model outputs/snake_dqn/models/best.pth --render
+python evaluate.py --game snake --agent dueling_dqn --model outputs/snake_dueling_dqn/models/best.pth --render
+```
+
+### CartPole
+
+```bash
+# 训练（默认 DQN）
+python train.py --game cartpole
+python train.py --game cartpole --agent a2c
+python train.py --game cartpole --agent reinforce
+
+# 评估
+python evaluate.py --game cartpole --model outputs/cartpole_dqn/models/best.pth
+python evaluate.py --game cartpole --model outputs/cartpole_dqn/models/best.pth --render
+python evaluate.py --game cartpole --agent a2c --model outputs/cartpole_a2c/models/best.pth --render
+```
+
+### LunarLander
+
+```bash
+# 训练（默认 DQN）
+python train.py --game lunarlander
+python train.py --game lunarlander --agent dueling_dqn
+python train.py --game lunarlander --agent a2c
+
+# 评估
+python evaluate.py --game lunarlander --model outputs/lunarlander_dqn/models/best.pth
+python evaluate.py --game lunarlander --model outputs/lunarlander_dqn/models/best.pth --render
+python evaluate.py --game lunarlander --agent dueling_dqn --model outputs/lunarlander_dueling_dqn/models/best.pth --render
+```
+
+### FrozenLake
+
+```bash
+# 训练（默认 Q-Learning）
+python train.py --game frozenlake
+python train.py --game frozenlake --agent dqn
+
+# 评估
+python evaluate.py --game frozenlake --model outputs/frozenlake_qlearning/models/best.pth
+python evaluate.py --game frozenlake --model outputs/frozenlake_qlearning/models/best.pth --render
+python evaluate.py --game frozenlake --agent dqn --model outputs/frozenlake_dqn/models/best.pth --render
+```
+
+### 通用参数
+
+```bash
+# 自定义训练轮数和评估频率
+python train.py --game cartpole --episodes 1000 --eval-every 50
+
+# 从检查点恢复训练
+python train.py --game flappybird --resume outputs/flappybird_dqn/models/best.pth
+
+# 评估多轮
+python evaluate.py --game lunarlander --model outputs/lunarlander_dqn/models/best.pth --episodes 20
 ```
 
 ## 支持的游戏

@@ -94,7 +94,7 @@ GAMES = {
         },
     },
     "lunarlander": {
-        "env": "LunarLander-v2",
+        "env": "LunarLander-v3",
         "default_agent": "dqn",
         "episodes": 1000,
         "max_steps": 1000,

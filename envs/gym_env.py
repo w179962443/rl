@@ -16,6 +16,7 @@ class GymEnv:
         self.render_mode = render
         render_mode = "human" if render else None
         self.env = gym.make(env_name, render_mode=render_mode, **kwargs)
+        self._episode_score = 0.0
 
         obs_space = self.env.observation_space
         if hasattr(obs_space, "n"):
@@ -31,12 +32,14 @@ class GymEnv:
 
     def reset(self) -> np.ndarray:
         obs, _ = self.env.reset()
+        self._episode_score = 0.0
         return self._process_obs(obs)
 
     def step(self, action: int) -> Tuple[np.ndarray, float, bool, dict]:
         obs, reward, terminated, truncated, info = self.env.step(action)
         done = terminated or truncated
-        info["score"] = info.get("score", reward)
+        self._episode_score += reward
+        info["score"] = self._episode_score
         return self._process_obs(obs), float(reward), done, info
 
     def _process_obs(self, obs):
