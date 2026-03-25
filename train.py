@@ -44,6 +44,7 @@ AGENT_MAP = {
     "reinforce": "agents.REINFORCEAgent",
     "a2c": "agents.A2CAgent",
     "qlearning": "agents.QLearningAgent",
+    "ppo": "agents.PPOAgent",
 }
 
 
@@ -56,6 +57,7 @@ def make_agent(agent_name: str, state_size: int, action_size: int, config: dict)
         "reinforce": agents.REINFORCEAgent,
         "a2c": agents.A2CAgent,
         "qlearning": agents.QLearningAgent,
+        "ppo": agents.PPOAgent,
     }
     if agent_name not in cls_map:
         raise ValueError(f"Unknown agent: {agent_name}. Choose from {list(cls_map)}")

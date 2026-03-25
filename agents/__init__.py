@@ -6,6 +6,7 @@ from .dueling_dqn_agent import DuelingDQNAgent
 from .reinforce_agent import REINFORCEAgent
 from .a2c_agent import A2CAgent
 from .qlearning_agent import QLearningAgent
+from .ppo_agent import PPOAgent
 
 __all__ = [
     "BaseAgent",
@@ -14,4 +15,5 @@ __all__ = [
     "REINFORCEAgent",
     "A2CAgent",
     "QLearningAgent",
+    "PPOAgent",
 ]

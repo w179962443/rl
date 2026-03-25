@@ -3,9 +3,23 @@ Game configurations — each entry defines environment, agent, and hyperparamete
 
 Usage:
     python train.py --game flappybird
-    python train.py --game flappybird --agent reinforce
+    python train.py --game flappybird --agent ppo
     python train.py --game dino --agent dueling_dqn
 """
+
+# Shared PPO hyperparameters (can be overridden per game)
+_PPO_BASE = {
+    "gamma": 0.99,
+    "gae_lambda": 0.95,
+    "clip_ratio": 0.2,
+    "learning_rate": 3e-4,
+    "hidden_size": 256,
+    "entropy_coef": 0.01,
+    "value_coef": 0.5,
+    "n_epochs": 4,
+    "batch_size": 64,
+    "max_grad_norm": 0.5,
+}
 
 GAMES = {
     "flappybird": {
@@ -27,6 +41,8 @@ GAMES = {
             "epsilon_start": 1.0,
             "epsilon_end": 0.01,
             "epsilon_decay": 0.9992,
+            # PPO params (used when --agent ppo)
+            **_PPO_BASE,
         },
     },
     "dino": {
@@ -49,6 +65,8 @@ GAMES = {
             "epsilon_start": 1.0,
             "epsilon_end": 0.01,
             "epsilon_decay": 0.9995,
+            # PPO params
+            **_PPO_BASE,
         },
     },
     "snake": {
@@ -70,6 +88,8 @@ GAMES = {
             "epsilon_start": 1.0,
             "epsilon_end": 0.01,
             "epsilon_decay": 0.999,
+            # PPO params
+            **{**_PPO_BASE, "learning_rate": 1e-3},
         },
     },
     "cartpole": {
@@ -91,6 +111,8 @@ GAMES = {
             "epsilon_start": 1.0,
             "epsilon_end": 0.01,
             "epsilon_decay": 0.995,
+            # PPO params
+            **{**_PPO_BASE, "hidden_size": 128, "learning_rate": 3e-4},
         },
     },
     "lunarlander": {
@@ -112,6 +134,8 @@ GAMES = {
             "epsilon_start": 1.0,
             "epsilon_end": 0.01,
             "epsilon_decay": 0.995,
+            # PPO params
+            **{**_PPO_BASE, "learning_rate": 5e-4},
         },
     },
     "frozenlake": {
@@ -130,6 +154,8 @@ GAMES = {
             "epsilon_start": 1.0,
             "epsilon_end": 0.01,
             "epsilon_decay": 0.9995,
+            # PPO params (state_size=16 for one-hot encoding)
+            **{**_PPO_BASE, "hidden_size": 64, "learning_rate": 1e-3, "n_epochs": 8},
         },
     },
 }
